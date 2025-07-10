@@ -1,0 +1,1047 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Ray Tracing in One Weekend (Rust)</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="disclaimer"><a class="header" href="#disclaimer">Disclaimer</a></h1>
+<p>The content of the original <a href="https://raytracing.github.io">book series</a> is licensed under the <a href="https://github.com/RayTracing/raytracing.github.io/blob/release/COPYING.txt">CC0 license</a>, which permits copying, modification, and distribution. The explanations are copied directly and have been annotated with Rust-specific details where appropriate. Any sentences that include words such as <em>I</em>, <em>me</em>, or <em>mine</em> are from the original authors, Peter Shirley, Trevor David Black or Steve Hollasch. Once again, thank you for this outstanding book series.</p>
+<div style="break-before: page; page-break-before: always;"></div><p><img src="chapters/../imgs/cover/CoverRTW1.jpg" alt="cover" /></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="overview"><a class="header" href="#overview">Overview</a></h1>
+<p>I’ve taught many graphics classes over the years. Often I do them in ray tracing, because you are forced to write all the code, but you can still get cool images with no API. I decided to adapt my course notes into a how-to, to get you to a cool program as quickly as possible. It will not be a full-featured ray tracer, but it does have the indirect lighting which has made ray tracing a staple in movies. Follow these steps, and the architecture of the ray tracer you produce will be good for extending to a more extensive ray tracer if you get excited and want to pursue that.</p>
+<p>When somebody says “ray tracing” it could mean many things. What I am going to describe is technically a path tracer, and a fairly general one. While the code will be pretty simple (let the computer do the work!) I think you’ll be very happy with the images you can make.</p>
+<p>I’ll take you through writing a ray tracer in the order I do it, along with some debugging tips. By the end, you will have a ray tracer that produces some great images. You should be able to do this in a weekend. If you take longer, don’t worry about it. I use C++ as the driving language, but you don’t need to.<sup class="footnote-reference" id="fr-1a-1"><a href="#footnote-1a">1</a></sup> However, I suggest you do, because it’s fast, portable, and most production movie and video game renderers are written in C++. Note that I avoid most “modern features” of C++, but inheritance and operator overloading are too useful for ray tracers to pass on.<sup class="footnote-reference" id="fr-1b-1"><a href="#footnote-1b">2</a></sup></p>
+<p>I do not provide the code online, but the code is real and I show all of it except for a few straightforward operators in the vec3 class. I am a big believer in typing in code to learn it, but when code is available I use it, so I only practice what I preach when the code is not available. So don’t ask!
+I have left that last part in because it is funny what a 180 I have done. Several readers ended up with subtle errors that were helped when we compared code. So please do type in the code, but you can find the finished source for each book in the <a href="chapters/TODO">RayTracing project on GitHub</a>.</p>
+<p>A note on the implementing code for these books — our philosophy for the included code prioritizes the following goals:</p>
+<ul>
+<li>The code should implement the concepts covered in the books.</li>
+<li>We use C++, but as simple as possible. Our programming style is very C-like, but we take advantage of modern features where it makes the code easier to use or understand.</li>
+<li>Our coding style continues the style established from the original books as much as possible, for continuity.</li>
+<li>Line length is kept to 96 characters per line, to keep lines consistent between the codebase and code listings in the books.<sup class="footnote-reference" id="fr-1c-1"><a href="#footnote-1c">3</a></sup></li>
+</ul>
+<p>The code thus provides a baseline implementation, with tons of improvements left for the reader to enjoy. There are endless ways one can optimize and modernize the code; we prioritize the simple solution.</p>
+<p>We assume a little bit of familiarity with vectors (like dot product and vector addition). If you don’t know that, do a little review. If you need that review, or to learn it for the first time, check out the online <em><a href="https://graphicscodex.com/">Graphics Codex</a></em> by Morgan McGuire, <em>Fundamentals of Computer Graphics</em> by Steve Marschner and Peter Shirley, or <em>Computer Graphics: Principles and Practice</em> by J.D. Foley and Andy Van Dam.</p>
+<p>See the <a href="chapters/TODO">project README</a> file for information about this project, the repository on GitHub, directory structure, building &amp; running, and how to make or reference corrections and contributions.</p>
+<p>See our <a href="chapters/TODO">Further Reading wiki page</a> for additional project related resources.</p>
+<p>These books have been formatted to print well directly from your browser. We also include PDFs of each book <a href="chapters/TODO">with each release</a>, in the “Assets” section.</p>
+<p>If you want to communicate with us, feel free to send us an email at:</p>
+<ul>
+<li>Peter Shirley, <a href="mailto:ptrshrl@gmail.com">ptrshrl@gmail.com</a></li>
+<li>Steve Hollasch, <a href="mailto:steve@hollasch.net">steve@hollasch.net</a></li>
+<li>Trevor David Black, <a href="mailto:trevordblack@trevord.black">trevordblack@trevord.black</a></li>
+</ul>
+<p>Finally, if you run into problems with your implementation, have general questions, or would like to share your own ideas or work, see the GitHub Discussions forum on the GitHub project.</p>
+<p>Thanks to everyone who lent a hand on this project. You can find them in the acknowledgments section at the end of this book.</p>
+<p>Let’s get on with it!</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-1a">
+<p>There is where Rust comes into play - a fast, reliable language with better ergonomics. This is an unbiased opinion of course *caugh*. <a href="#fr-1a-1">↩</a></p>
+</li>
+<li id="footnote-1b">
+<p>Inheritance is not supported in Rust. In many places simple composition and traits will do the trick. <a href="#fr-1b-1">↩</a></p>
+</li>
+<li id="footnote-1c">
+<p><a href="https://github.com/rust-lang/rustfmt">rustfmt</a> will be used instead, as it is shipped with most IDEs. <a href="#fr-1c-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="the-ppm-image-format"><a class="header" href="#the-ppm-image-format">The PPM Image Format</a></h2>
+<p>Whenever you start a renderer, you need a way to see an image. The most straightforward way is to write it to a file. The catch is, there are so many formats. Many of those are complex. I always start with a plain text ppm file. Here’s a nice description from Wikipedia:</p>
+<p><img src="chapters/output_an_image/../../imgs/fig-1.01-ppm.jpg" alt="PPM Example" />
+<strong>Figure 1:</strong> <em>PPM Example</em></p>
+<p>Let’s make some C++ code to output such a thing:<sup class="footnote-reference" id="fr-21a-1"><a href="#footnote-21a">1</a></sup></p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    // Image
+
+    const IMAGE_WIDTH: u32 = 256;
+    const IMAGE_HEIGHT: u32 = 256;
+
+    // Render
+
+    println!("P3");
+    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+    println!("255");
+
+    for j in 0..IMAGE_HEIGHT {
+        for i in 0..IMAGE_WIDTH {
+            let r = i as f64 / (IMAGE_WIDTH - 1) as f64;
+            let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
+            let b = 0.0;
+
+            let ir = (255.999 * r) as i32;
+            let ig = (255.999 * g) as i32;
+            let ib = (255.999 * b) as i32;
+
+            println!("{ir} {ig} {ib}");
+        }
+    }
+}</code></pre></pre>
+<p><strong>Listing 1:</strong> [<a href="chapters/output_an_image/TODO">main.rs</a>] <em>Creating your first image</em></p>
+<p>There are some things to note in this code:</p>
+<ol>
+<li>The pixels are written out in rows.</li>
+<li>Every row of pixels is written out left to right.</li>
+<li>These rows are written out from top to bottom.</li>
+<li>By convention, each of the red/green/blue components are represented internally by real-valued variables that range from 0.0 to 1.0. These must be scaled to integer values between 0 and 255 before we print them out.</li>
+<li>Red goes from fully off (black) to fully on (bright red) from left to right, and green goes from fully off at the top (black) to fully on at the bottom (bright green). Adding red and green light together make yellow so we should expect the bottom right corner to be yellow.</li>
+</ol>
+<hr>
+<ol class="footnote-definition"><li id="footnote-21a">
+<p>It is Rust code of course. This won't be annotated anymore. <a href="#fr-21a-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="creating-an-image-file"><a class="header" href="#creating-an-image-file">Creating an Image File</a></h2>
+<p>Because the file is written to the standard output stream, you'll need to redirect it to an image file. Typically this is done from the command-line by using the <code>&gt;</code> redirection operator.</p>
+<p>On Windows, you'd get the debug build from CMake running this command:<sup class="footnote-reference" id="fr-22a-1"><a href="#footnote-22a">1</a></sup></p>
+<pre><code class="language-shell">cargo b
+</code></pre>
+<p>Then run your newly-built program like so:<sup class="footnote-reference" id="fr-22b-1"><a href="#footnote-22b">2</a></sup></p>
+<pre><code class="language-shell">cargo r &gt; image.ppm
+</code></pre>
+<p>Later, it will be better to run optimized builds for speed. In that case, you would build like this:</p>
+<pre><code class="language-shell">cargo b -r
+</code></pre>
+<p>and would run the optimized program like this:</p>
+<pre><code class="language-shell">cargo r -r
+</code></pre>
+<p>The examples above assume that you are building with CMake, using the same approach as the CMakeLists.txt file in the included source. Use whatever build environment (and language) you're most comfortable with.</p>
+<p>On Mac or Linux, release build, you would launch the program like this:<sup class="footnote-reference" id="fr-22c-1"><a href="#footnote-22c">3</a></sup></p>
+<pre><code class="language-shell">cargo r &gt; image.ppm
+</code></pre>
+<p>Complete building and running instructions can be found in the <a href="chapters/output_an_image/TODO">project README</a>.</p>
+<p>Opening the output file (in <code>ToyViewer</code> on my Mac, but try it in your favorite image viewer and Google “ppm viewer” if your viewer doesn’t support it) shows this result:</p>
+<img style="width: 100%" src="chapters/output_an_image/../../imgs/img-1.01-first-ppm-image.png" alt="First PPM image">
+<p><strong>Image 1:</strong> <em>First PPM image</em></p>
+<p>Hooray! This is the graphics “hello world”. If your image doesn’t look like that, open the output file in a text editor and see what it looks like. It should start something like this:</p>
+<pre><code class="language-ppm">P3
+256 256
+255
+0 0 0
+1 0 0
+2 0 0
+3 0 0
+4 0 0
+5 0 0
+6 0 0
+7 0 0
+8 0 0
+9 0 0
+10 0 0
+11 0 0
+12 0 0
+...
+</code></pre>
+<p><strong>Listing 2:</strong> <em>First image output</em></p>
+<p>If your PPM file doesn't look like this, then double-check your formatting code. If it <em>does</em> look like this but fails to render, then you may have line-ending differences or something similar that is confusing your image viewer. To help debug this, you can find a file <code>test.ppm</code> in the <code>images</code> directory of the Github project. This should help to ensure that your viewer can handle the PPM format and to use as a comparison against your generated PPM file.</p>
+<p>Some readers have reported problems viewing their generated files on Windows. In this case, the problem is often that the PPM is written out as UTF-16, often from PowerShell. If you run into this problem, see <a href="chapters/output_an_image/TODO">Discussion 1114</a> for help with this issue.</p>
+<p>If everything displays correctly, then you're pretty much done with system and IDE issues — everything in the remainder of this series uses this same simple mechanism for generated rendered images.</p>
+<p>If you want to produce other image formats, I am a fan of <code>stb_image.h</code>, a header-only image library available on GitHub at <a href="https://github.com/nothings/stb">https://github.com/nothings/stb</a>.<sup class="footnote-reference" id="fr-22d-1"><a href="#footnote-22d">4</a></sup></p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-22a">
+<p>We are not using CMake; we are relying on the standard cargo build tool. <a href="#fr-22a-1">↩</a></p>
+</li>
+<li id="footnote-22b">
+<p>You can skip the building step since it is part of the run command (or <code>r</code> for short). <a href="#fr-22b-1">↩</a></p>
+</li>
+<li id="footnote-22c">
+<p>It is the same as for Windows. <a href="#fr-22c-1">↩</a></p>
+</li>
+<li id="footnote-22d">
+<p>Rust crate alternativ: <a href="https://crates.io/crates/stb_image">https://crates.io/crates/stb_image</a>. <a href="#fr-22d-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="adding-a-progress-indicator"><a class="header" href="#adding-a-progress-indicator">Adding a Progress Indicator</a></h2>
+<p>Before we continue, let's add a progress indicator to our output. This is a handy way to track the progress of a long render, and also to possibly identify a run that's stalled out due to an infinite loop or other problem.</p>
+<p>Our program outputs the image to the standard output stream (<code>std::cout</code>), so leave that alone and instead write to the logging output stream (<code>std::clog</code>):<sup class="footnote-reference" id="fr-23a-1"><a href="#footnote-23a">1</a></sup></p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index af636bc..00cad27 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,26 +1,29 @@
+</span><span class="boring"> fn main() {
+</span><span class="boring">     // Image
+</span><span class="boring"> 
+</span><span class="boring">     const IMAGE_WIDTH: u32 = 256;
+</span><span class="boring">     const IMAGE_HEIGHT: u32 = 256;
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span>+    env_logger::init();
+     println!("P3");
+     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+     println!("255");
+ 
+     for j in 0..IMAGE_HEIGHT {
++        log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+         for i in 0..IMAGE_WIDTH {
+             let r = i as f64 / (IMAGE_WIDTH - 1) as f64;
+             let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
+             let b = 0.0;
+ 
+             let ir = (255.999 * r) as i32;
+             let ig = (255.999 * g) as i32;
+             let ib = (255.999 * b) as i32;
+ 
+             println!("{ir} {ig} {ib}");
+         }
+     }
++    log::info!("Done.");
+<span class="boring"> }</span></code></pre>
+<p><strong>Listing 3:</strong> [<a href="chapters/output_an_image/TODO">main.rs</a>] <em>Main render loop with progress reporting</em></p>
+<p>Now when running, you'll see a running count of the number of scanlines remaining. Hopefully this runs so fast that you don't even see it! Don't worry — you'll have lots of time in the future to watch a slowly updating progress line as we expand our ray tracer.</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-23a">
+<p>The <a href="https://crates.io/crates/log">log crate</a> with the <a href="https://crates.io/crates/env_logger">env_logger</a> implementation is a good alternative to <code>std::clog</code>. Run <code>RUST_LOG=info cargo r --bin indicator &gt; image.ppm</code> for the log output. <a href="#fr-23a-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h1 id="the-vec3-class-1"><a class="header" href="#the-vec3-class-1">The vec3 Class <sup class="footnote-reference" id="fr-3a-1"><a href="#footnote-3a">1</a></sup></a></h1>
+<p>Almost all graphics programs have some class(es) for storing geometric vectors and colors. In many systems these vectors are 4D (3D position plus a homogeneous coordinate for geometry, or RGB plus an alpha transparency component for colors). For our purposes, three coordinates suffice. We’ll use the same class vec3 for colors, locations, directions, offsets, whatever. Some people don’t like this because it doesn’t prevent you from doing something silly, like subtracting a position from a color. They have a good point, but we’re going to always take the “less code” route when not obviously wrong. In spite of this, we do declare two aliases for vec3: point3 and color. Since these two types are just aliases for vec3, you won't get warnings if you pass a color to a function expecting a point3, and nothing is stopping you from adding a point3 to a color, but it makes the code a little bit easier to read and to understand.</p>
+<p>We define the vec3 class in the top half of a new vec3.h header file, and define a set of useful vector utility functions in the bottom half:</p>
+<pre><code class="language-rust norun noplayground">use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub},
+};
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Vec3 {
+    pub e: [f64; 3],
+}
+
+pub type Point3 = Vec3;
+
+impl Vec3 {
+    pub fn new(e0: f64, e1: f64, e2: f64) -&gt; Self {
+        Self { e: [e0, e1, e2] }
+    }
+
+    pub fn x(&amp;self) -&gt; f64 {
+        self.e[0]
+    }
+
+    pub fn y(&amp;self) -&gt; f64 {
+        self.e[1]
+    }
+
+    pub fn z(&amp;self) -&gt; f64 {
+        self.e[2]
+    }
+
+    pub fn length(&amp;self) -&gt; f64 {
+        f64::sqrt(self.length_squared())
+    }
+
+    pub fn length_squared(&amp;self) -&gt; f64 {
+        self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Self;
+
+    fn neg(self) -&gt; Self::Output {
+        Self::Output {
+            e: self.e.map(|e| -e),
+        }
+    }
+}
+
+impl Index&lt;usize&gt; for Vec3 {
+    type Output = f64;
+
+    fn index(&amp;self, index: usize) -&gt; &amp;Self::Output {
+        &amp;self.e[index]
+    }
+}
+
+impl IndexMut&lt;usize&gt; for Vec3 {
+    fn index_mut(&amp;mut self, index: usize) -&gt; &amp;mut Self::Output {
+        &amp;mut self.e[index]
+    }
+}
+
+impl AddAssign for Vec3 {
+    fn add_assign(&amp;mut self, rhs: Self) {
+        self.e[0] += rhs.e[0];
+        self.e[1] += rhs.e[1];
+        self.e[2] += rhs.e[2];
+    }
+}
+
+impl MulAssign&lt;f64&gt; for Vec3 {
+    fn mul_assign(&amp;mut self, rhs: f64) {
+        self.e[0] *= rhs;
+        self.e[1] *= rhs;
+        self.e[2] *= rhs;
+    }
+}
+
+impl DivAssign&lt;f64&gt; for Vec3 {
+    fn div_assign(&amp;mut self, rhs: f64) {
+        self.mul_assign(1.0 / rhs);
+    }
+}
+
+impl Display for Vec3 {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
+    }
+}
+
+impl Add for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -&gt; Self::Output {
+        Self::Output {
+            e: [
+                self.e[0] + rhs.e[0],
+                self.e[1] + rhs.e[1],
+                self.e[2] + rhs.e[2],
+            ],
+        }
+    }
+}
+
+impl Sub for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -&gt; Self::Output {
+        Self::Output {
+            e: [
+                self.e[0] - rhs.e[0],
+                self.e[1] - rhs.e[1],
+                self.e[2] - rhs.e[2],
+            ],
+        }
+    }
+}
+
+impl Mul for Vec3 {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -&gt; Self::Output {
+        Self::Output {
+            e: [
+                self.e[0] * rhs.e[0],
+                self.e[1] * rhs.e[1],
+                self.e[2] * rhs.e[2],
+            ],
+        }
+    }
+}
+
+impl Mul&lt;f64&gt; for Vec3 {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -&gt; Self::Output {
+        Self::Output {
+            e: [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs],
+        }
+    }
+}
+
+impl Mul&lt;Vec3&gt; for f64 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: Vec3) -&gt; Self::Output {
+        rhs.mul(self)
+    }
+}
+
+impl Div&lt;f64&gt; for Vec3 {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -&gt; Self::Output {
+        self * (1.0 / rhs)
+    }
+}
+
+#[inline]
+pub fn dot(u: Vec3, v: Vec3) -&gt; f64 {
+    u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
+}
+
+#[inline]
+pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
+    Vec3::new(
+        u.e[1] * v.e[2] - u.e[2] * v.e[1],
+        u.e[2] * v.e[0] - u.e[0] * v.e[2],
+        u.e[0] * v.e[1] - u.e[1] * v.e[0],
+    )
+}
+
+#[inline]
+pub fn unit_vector(v: Vec3) -&gt; Vec3 {
+    v / v.length()
+}</code></pre>
+<p><strong>Listing 4:</strong> [<a href="chapters/the_vec3_class/TODO">vec3.rs</a>] <em>vec3 definitions and helper functions</em></p>
+<p>We use double here, but some ray tracers use float. double has greater precision and range, but is twice the size compared to float. This increase in size may be important if you're programming in limited memory conditions (such as hardware shaders). Either one is fine — follow your own tastes.</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-3a">
+<p>There are no classes in Rust. They are replaced with structs. <a href="#fr-3a-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="color-utility-functions"><a class="header" href="#color-utility-functions">Color Utility Functions</a></h2>
+<p>Using our new <code>vec3</code> class, we'll create a new <code>color.h</code> header file and define a utility function that writes a single pixel's color out to the standard output stream.</p>
+<pre><code class="language-rust norun noplayground">use crate::vec3::Vec3;
+
+pub type Color = Vec3;
+
+pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::io::Result&lt;()&gt; {
+    let r = pixel_color.x();
+    let g = pixel_color.y();
+    let b = pixel_color.z();
+
+    let rbyte = (255.999 * r) as i32;
+    let gbyte = (255.999 * g) as i32;
+    let bbyte = (255.999 * b) as i32;
+
+    writeln!(out, "{rbyte} {gbyte} {bbyte}")
+}</code></pre>
+<p><strong>Listing 5:</strong> [<a href="chapters/the_vec3_class/TODO">color.rs</a>] <em>color utility functions</em></p>
+<p>Now we can change our main to use both of these:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 00cad27..bb37ee6 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,29 +1,30 @@
+</span><span class="boring">-fn main() {
+</span>+use code::color::{Color, write_color};
++
++fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+     // Image
+ 
+     const IMAGE_WIDTH: u32 = 256;
+     const IMAGE_HEIGHT: u32 = 256;
+ 
+     // Render
+ 
+     env_logger::init();
+     println!("P3");
+     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+     println!("255");
+ 
+     for j in 0..IMAGE_HEIGHT {
+         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+         for i in 0..IMAGE_WIDTH {
+<span class="boring">-            let r = i as f64 / (IMAGE_WIDTH - 1) as f64;
+</span><span class="boring">-            let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
+</span><span class="boring">-            let b = 0.0;
+</span><span class="boring">-
+</span><span class="boring">-            let ir = (255.999 * r) as i32;
+</span><span class="boring">-            let ig = (255.999 * g) as i32;
+</span><span class="boring">-            let ib = (255.999 * b) as i32;
+</span><span class="boring">-
+</span><span class="boring">-            println!("{ir} {ig} {ib}");
+</span>+            let pixel_color = Color::new(
++                i as f64 / (IMAGE_WIDTH - 1) as f64,
++                j as f64 / (IMAGE_HEIGHT - 1) as f64,
++                0.0,
++            );
++            write_color(std::io::stdout(), pixel_color)?;
+         }
+     }
+     log::info!("Done.");
++
++    Ok(())
+ }</code></pre>
+<p><strong>Listing 6:</strong> [<a href="chapters/the_vec3_class/TODO">main.rs</a>] <em>Final code for the first PPM image</em></p>
+<p>And you should get the exact same picture as before.</p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="the-ray-class"><a class="header" href="#the-ray-class">The ray Class</a></h2>
+<p>The one thing that all ray tracers have is a ray class and a computation of what color is seen along a ray. Let’s think of a ray as a function \( \mathbf{P} (t) = \mathbf{A} + t \mathbf{b} \). Here \( \mathbf{P} \) is a 3D position along a line in 3D. \( \mathbf{A} \) is the ray origin and \( \mathbf{b} \) is the ray direction. The ray parameter \( t \) is a real number (double in the code). Plug in a different \( t \) and \( \mathbf{P} (t) \) moves the point along the ray. Add in negative \( t \) values and you can go anywhere on the 3D line. For positive \( t \), you get only the parts in front of \( \mathbf{A} \), and this is what is often called a half-line or a ray.</p>
+<p><img src="chapters/rays_a_simple_camera_and_background/../../imgs/fig-1.02-lerp.jpg" alt="Linear interpolation" /></p>
+<p><strong>Figure 2:</strong> <em>Linear interpolation</em></p>
+<p>We can represent the idea of a ray as a class, and represent the function \( \mathbf{P} (t) \) as a function that we'll call <code>ray::at(t)</code>:</p>
+<pre><code class="language-rust norun noplayground">use crate::vec3::{Point3, Vec3};
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Ray {
+    origin: Point3,
+    direction: Vec3,
+}
+
+impl Ray {
+    pub fn new(origin: Point3, direction: Vec3) -&gt; Self {
+        Self { origin, direction }
+    }
+
+    pub fn origin(&amp;self) -&gt; Point3 {
+        self.origin
+    }
+
+    pub fn direction(&amp;self) -&gt; Vec3 {
+        self.direction
+    }
+
+    pub fn at(&amp;self, t: f64) -&gt; Point3 {
+        self.origin + t * self.direction
+    }
+}</code></pre>
+<p><strong>Listing 7:</strong> [<a href="chapters/rays_a_simple_camera_and_background/TODO">ray.rs</a>] <em>The ray class</em></p>
+<p>(For those unfamiliar with C++, the functions ray::origin() and ray::direction() both return an immutable reference to their members. Callers can either just use the reference directly, or make a mutable copy depending on their needs.) <sup class="footnote-reference" id="fr-41a-1"><a href="#footnote-41a">1</a></sup></p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-41a">
+<p>The careful reader may have noticed that, in the Rust approach, both the <code>Vec3</code> and <code>Ray</code> structs implement Copy. This method is generally more common than returning a reference and cloning it for mutability when needed. <a href="#fr-41a-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="sending-rays-into-the-scene"><a class="header" href="#sending-rays-into-the-scene">Sending Rays Into the Scene</a></h2>
+<p>Now we are ready to turn the corner and make a ray tracer. At its core, a ray tracer sends rays through pixels and computes the color seen in the direction of those rays. The involved steps are</p>
+<ol>
+<li>Calculate the ray from the “eye” through the pixel,</li>
+<li>Determine which objects the ray intersects, and</li>
+<li>Compute a color for the closest intersection point.</li>
+</ol>
+<p>When first developing a ray tracer, I always do a simple camera for getting the code up and running.</p>
+<p>I’ve often gotten into trouble using square images for debugging because I transpose 𝑥 and 𝑦 too often, so we’ll use a non-square image. A square image has a 1∶1 aspect ratio, because its width is the same as its height. Since we want a non-square image, we'll choose 16∶9 because it's so common. A 16∶9 aspect ratio means that the ratio of image width to image height is 16∶9. Put another way, given an image with a 16∶9 aspect ratio,</p>
+<p>\[ width\,/\,height=16\,/\,9=1.7778 \]</p>
+<p>For a practical example, an image 800 pixels wide by 400 pixels high has a 2∶1 aspect ratio.</p>
+<p>The image's aspect ratio can be determined from the ratio of its width to its height. However, since we have a given aspect ratio in mind, it's easier to set the image's width and the aspect ratio, and then using this to calculate for its height. This way, we can scale up or down the image by changing the image width, and it won't throw off our desired aspect ratio. We do have to make sure that when we solve for the image height the resulting height is at least 1.</p>
+<p>In addition to setting up the pixel dimensions for the rendered image, we also need to set up a virtual <em>viewport</em> through which to pass our scene rays. The viewport is a virtual rectangle in the 3D world that contains the grid of image pixel locations. If pixels are spaced the same distance horizontally as they are vertically, the viewport that bounds them will have the same aspect ratio as the rendered image. The distance between two adjacent pixels is called the pixel spacing, and square pixels is the standard.</p>
+<p>To start things off, we'll choose an arbitrary viewport height of 2.0, and scale the viewport width to give us the desired aspect ratio. Here's a snippet of what this code will look like:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use code::color::{Color, write_color};
+</span><span class="boring">
+</span><span class="boring">fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">    // Image
+</span><span class="boring">
+</span>    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: i32 = 400;
+
+    // Calculate the image height, and ensure that it's at least 1.
+    const IMAGE_HEIGHT: i32 = {
+        let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+        if image_height &lt; 1 { 1 } else { image_height }
+    };
+
+    // Viewport widths less than one are ok since they are real valued.
+    let viewport_height = 2.0;
+    let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+<span class="boring">
+</span><span class="boring">    // Render
+</span><span class="boring">
+</span><span class="boring">    env_logger::init();
+</span><span class="boring">    println!("P3");
+</span><span class="boring">    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">    println!("255");
+</span><span class="boring">
+</span><span class="boring">    for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">        log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">        for i in 0..IMAGE_WIDTH {
+</span><span class="boring">            let pixel_color = Color::new(
+</span><span class="boring">                i as f64 / (IMAGE_WIDTH - 1) as f64,
+</span><span class="boring">                j as f64 / (IMAGE_HEIGHT - 1) as f64,
+</span><span class="boring">                0.0,
+</span><span class="boring">            );
+</span><span class="boring">            write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">    log::info!("Done.");
+</span><span class="boring">
+</span><span class="boring">    Ok(())
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 8:</strong> <em>Rendered image setup</em></p>
+<p>If you're wondering why we don't just use <code>aspect_ratio</code> when computing <code>viewport_width</code>, it's because the value set to <code>aspect_ratio</code> is the ideal ratio, it may not be the <em>actual</em> ratio between <code>image_width</code> and <code>image_height</code>. If <code>image_height</code> was allowed to be real valued—rather than just an integer—then it would be fine to use <code>aspect_ratio</code>. But the <em>actual</em> ratio between <code>image_width</code> and <code>image_height</code> can vary based on two parts of the code. First, <code>image_height</code> is rounded down to the nearest integer, which can increase the ratio. Second, we don't allow <code>image_height</code> to be less than one, which can also change the actual aspect ratio.</p>
+<p>Note that <code>aspect_ratio</code> is an ideal ratio, which we approximate as best as possible with the integer-based ratio of image width over image height. In order for our viewport proportions to exactly match our image proportions, we use the calculated image aspect ratio to determine our final viewport width.</p>
+<p>Next we will define the camera center: a point in 3D space from which all scene rays will originate (this is also commonly referred to as the <em>eye point</em>). The vector from the camera center to the viewport center will be orthogonal to the viewport. We'll initially set the distance between the viewport and the camera center point to be one unit. This distance is often referred to as the <em>focal length</em>.</p>
+<p>For simplicity we'll start with the camera center at \( (0,0,0) \). We'll also have the y-axis go up, the x-axis to the right, and the negative z-axis pointing in the viewing direction. (This is commonly referred to as <em>right-handed coordinates</em>.)</p>
+<p><img src="chapters/rays_a_simple_camera_and_background/../../imgs/fig-1.03-cam-geom.jpg" alt="Camera geometry" /></p>
+<p><strong>Figure 3:</strong> <em>Camera geometry</em></p>
+<p>Now the inevitable tricky part. While our 3D space has the conventions above, this conflicts with our image coordinates, where we want to have the zeroth pixel in the top-left and work our way down to the last pixel at the bottom right. This means that our image coordinate Y-axis is inverted: Y increases going down the image.</p>
+<p>As we scan our image, we will start at the upper left pixel (pixel \( 0,0 \)), scan left-to-right across each row, and then scan row-by-row, top-to-bottom. To help navigate the pixel grid, we'll use a vector from the left edge to the right edge (\( \mathbf{V_u} \)), and a vector from the upper edge to the lower edge (\( \mathbf{V_v} \)).</p>
+<p>Our pixel grid will be inset from the viewport edges by half the pixel-to-pixel distance. This way, our viewport area is evenly divided into width × height identical regions. Here's what our viewport and pixel grid look like:</p>
+<p><img src="chapters/rays_a_simple_camera_and_background/../../imgs/fig-1.04-pixel-grid.jpg" alt="Viewport and pixel grid" /></p>
+<p><strong>Figure 4:</strong> <em>Viewport and pixel grid</em></p>
+<p>In this figure, we have the viewport, the pixel grid for a 7×5 resolution image, the viewport upper left corner \( \mathbf{Q} \), the pixel \( \mathbf{P_{0,0}} \) location, the viewport vector \( \mathbf{V_u} \) (<code>viewport_u</code>), the viewport vector \( \mathbf{V_v} \) (<code>viewport_v</code>), and the pixel delta vectors \( \mathbf{\Delta u} \) and \( \mathbf{\Delta v} \).</p>
+<p>Drawing from all of this, here's the code that implements the camera. We'll stub in a function <code>ray_color(const ray&amp; r)</code> that returns the color for a given scene ray — which we'll set to always return black for now.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index bb37ee6..8104ae8 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,30 +1,65 @@
+</span><span class="boring">-use code::color::{Color, write_color};
+</span>+use code::{
++    color::{Color, write_color},
++    ray::Ray,
++    vec3::{Point3, Vec3},
++};
++
++fn ray_color(r: Ray) -&gt; Color {
++    Color::new(0.0, 0.0, 0.0)
++}
+ 
+ fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+     // Image
+ 
+<span class="boring">-    const IMAGE_WIDTH: u32 = 256;
+</span><span class="boring">-    const IMAGE_HEIGHT: u32 = 256;
+</span>+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
++    const IMAGE_WIDTH: i32 = 400;
++
++    // Calculate the image height, and ensure that it's at least 1.
++    const IMAGE_HEIGHT: i32 = {
++        let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
++        if image_height &lt; 1 { 1 } else { image_height }
++    };
++
++    // Camera
++
++    let focal_length = 1.0;
++    let viewport_height = 2.0;
++    let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
++    let camera_center = Point3::new(0.0, 0.0, 0.0);
++
++    // Calculate the vectors across the horizontal and down the vertical viewport edges.
++    let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
++    let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
++
++    // Calculate the horizontal and vertical delta vectors from pixel to pixel.
++    let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
++    let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
++
++    // Calculate the location of the upper left pixel.
++    let viewport_upper_left =
++        camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
++    let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+ 
+     // Render
+ 
+     env_logger::init();
+     println!("P3");
+     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+     println!("255");
+ 
+     for j in 0..IMAGE_HEIGHT {
+         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+         for i in 0..IMAGE_WIDTH {
+<span class="boring">-            let pixel_color = Color::new(
+</span><span class="boring">-                i as f64 / (IMAGE_WIDTH - 1) as f64,
+</span><span class="boring">-                j as f64 / (IMAGE_HEIGHT - 1) as f64,
+</span><span class="boring">-                0.0,
+</span><span class="boring">-            );
+</span>+            let pixel_center =
++                pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
++            let ray_direction = pixel_center - camera_center;
++            let r = Ray::new(camera_center, ray_direction);
++
++            let pixel_color = ray_color(r);
+             write_color(std::io::stdout(), pixel_color)?;
+         }
+     }
+     log::info!("Done.");
+ 
+     Ok(())
+ }</code></pre>
+<p><strong>Listing 9:</strong> [<a href="chapters/rays_a_simple_camera_and_background/TODO">main.rs</a>] <em>Creating scene rays</em></p>
+<p>Notice that in the code above, I didn't make <code>ray_direction</code> a unit vector, because I think not doing that makes for simpler and slightly faster code.</p>
+<p>Now we'll fill in the <code>ray_color(ray)</code> function to implement a simple gradient. This function will linearly blend white and blue depending on the height of the \( y \) coordinate <em>after</em> scaling the ray direction to unit length (so \( -1.0 &lt; y &lt; 1.0 \)). Because we're looking at the 𝑦 height after normalizing the vector, you'll notice a horizontal gradient to the color in addition to the vertical gradient.</p>
+<p>I'll use a standard graphics trick to linearly scale \( 0.0 \leq a \leq 1.0 \). When \( a = 1.0 \), I want blue. When \( a = 0.0 \), I want white. In between, I want a blend. This forms a “linear blend”, or “linear interpolation”. This is commonly referred to as a <em>lerp</em> between two values. A lerp is always of the form</p>
+<p>\[ blendedValue = (1 − 𝑎) \cdot startValue + 𝑎 \cdot endValue, \]</p>
+<p>with \( a \) going from zero to one.</p>
+<p>Putting all this together, here's what we get:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 8104ae8..f31dc16 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,65 +1,67 @@
+</span> use code::{
+     color::{Color, write_color},
+     ray::Ray,
+<span class="boring">-    vec3::{Point3, Vec3},
+</span>+    vec3::{Point3, Vec3, unit_vector},
+ };
+ 
+ fn ray_color(r: Ray) -&gt; Color {
+<span class="boring">-    Color::new(0.0, 0.0, 0.0)
+</span>+    let unit_direction = unit_vector(r.direction());
++    let a = 0.5 * (unit_direction.y() + 1.0);
++    (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+ }
+<span class="boring"> 
+</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">     // Image
+</span><span class="boring"> 
+</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // Camera
+</span><span class="boring"> 
+</span><span class="boring">     let focal_length = 1.0;
+</span><span class="boring">     let viewport_height = 2.0;
+</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the location of the upper left pixel.
+</span><span class="boring">     let viewport_upper_left =
+</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring">     println!("P3");
+</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">     println!("255");
+</span><span class="boring"> 
+</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         for i in 0..IMAGE_WIDTH {
+</span><span class="boring">             let pixel_center =
+</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">             let ray_direction = pixel_center - camera_center;
+</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring"> 
+</span><span class="boring">             let pixel_color = ray_color(r);
+</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">     Ok(())
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 10:</strong> [<a href="chapters/rays_a_simple_camera_and_background/TODO">main.rs</a>] <em>Rendering a blue-to-white gradient</em></p>
+<p>In our case this produces:</p>
+<img style="width: 100%" src="chapters/rays_a_simple_camera_and_background/../../imgs/img-1.02-blue-to-white.png" alt="A blue-to-white gradient depending on ray Y coordinate">
+<p><strong>Image 2:</strong> <em>A blue-to-white gradient depending on ray Y coordinate</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="adding-a-sphere"><a class="header" href="#adding-a-sphere">Adding a Sphere</a></h1>
+<p>Let’s add a single object to our ray tracer. People often use spheres in ray tracers because calculating whether a ray hits a sphere is relatively simple.</p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="ray-sphere-intersection"><a class="header" href="#ray-sphere-intersection">Ray-Sphere Intersection</a></h2>
+<p>The equation for a sphere of radius \( r \) that is centered at the origin is an important mathematical equation:</p>
+<p>\[ x^2 + y^2 + z^2 = r^2 \]</p>
+<p>You can also think of this as saying that if a given point \( (x, y, z) \) is on the surface of the sphere, then \( x^2 + y^2 + z^2 = r^2 \). If a given point \( (x, y, z) \) is <em>inside</em> the sphere, then \( x^2 + y^2 + z^2 &lt; r^2 \), and if a given point \( (x, y, z) \) is <em>outside</em> the sphere, then \( x^2 + y^2 + z^2 &gt; r^2 \).</p>
+<p>If we want to allow the sphere center to be at an arbitrary point \( (C_x, C_y, C_z) \), then the equation becomes a lot less nice:</p>
+<p>\[ (C_x - x)^2 + (C_y - y)^2 + (C_z - z)^2 = r^2 \]</p>
+<p>In graphics, you almost always want your formulas to be in terms of vectors so that all the \( x/y/z \) stuff can be simply represented using a <code>vec3</code> class. You might note that the vector from point \( \mathbf{P} = (x, y, z) \) to center \( \mathbf{C} = (C_x, C_y, C_z) \) is \( (\mathbf{C} - \mathbf{P}) \).</p>
+<p>If we use the definition of the dot product:</p>
+<p>\[ (\mathbf{C} - \mathbf{P}) \cdot (\mathbf{C} - \mathbf{P}) = (C_x - x)^2 + (C_y - y)^2 + (C_z - z)^2 \]
+Then we can rewrite the equation of the sphere in vector form as:</p>
+<p>\[ (\mathbf{C} - \mathbf{P}) \cdot (\mathbf{C} - \mathbf{P}) = r^2 \]</p>
+<p>We can read this as “any point \( \mathbf{P} \)  that satisfies this equation is on the sphere”. We want to know if our ray \( \mathbf{P}(t) = \mathbf{Q} + t \mathbf{d} \) ever hits the sphere anywhere. If it does hit the sphere, there is some \( t \) for which \( \mathbf{P}(t) \) satisfies the sphere equation. So we are looking for any \( t \) where this is true:</p>
+<p>\[ (\mathbf{C} - \mathbf{P}(t)) \cdot (\mathbf{C} - \mathbf{P}(t)) = r^2 \]</p>
+<p>which can be found by replacing \( \mathbf{P}(t) \) with its expanded form:</p>
+<p>\[ (\mathbf{C} - (\mathbf{Q} + t \mathbf{d})) \cdot (\mathbf{C} - (\mathbf{Q} + t \mathbf{d})) = r^2 \]</p>
+<p>We have three vectors on the left dotted by three vectors on the right. If we solved for the full dot product we would get nine vectors. You can definitely go through and write everything out, but we don't need to work that hard. If you remember, we want to solve for \( t \), so we'll separate the terms based on whether there is a \( t \) or not:</p>
+<p>\[ (-t \mathbf{d} + (\mathbf{C} - \mathbf{Q})) \cdot (-t \mathbf{d} + (\mathbf{C} - \mathbf{Q})) = r^2 \]</p>
+<p>And now we follow the rules of vector algebra to distribute the dot product:</p>
+<p>\[ t^2 \mathbf{d} \cdot \mathbf{d} - 2 t \mathbf{d} \cdot (\mathbf{C} - \mathbf{Q}) + (\mathbf{C} - \mathbf{Q}) \cdot (\mathbf{C} - \mathbf{Q}) = r^2 \]</p>
+<p>Move the square of the radius over to the left hand side:</p>
+<p>\[ t^2 \mathbf{d} \cdot \mathbf{d} - 2 t \mathbf{d} \cdot (\mathbf{C} - \mathbf{Q}) + (\mathbf{C} - \mathbf{Q}) \cdot (\mathbf{C} - \mathbf{Q}) - r^2 = 0 \]</p>
+<p>It's hard to make out what exactly this equation is, but the vectors and \( r \) in that equation are all constant and known. Furthermore, the only vectors that we have are reduced to scalars by dot product. The only unknown is \( t \), and we have a \( t^2 \), which means that this equation is quadratic. You can solve for a quadratic equation \( ax^2 + bx + c = 0 \) by using the quadratic formula:</p>
+<p>\[ \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]</p>
+<p>So solving for \( t \) in the ray-sphere intersection equation gives us these values for \( a \), \( b \), and \( c \):</p>
+<p>\[ a = \mathbf{d} \cdot \mathbf{d} \]
+\[ b = -2 \mathbf{d} \cdot (\mathbf{C} - \mathbf{Q}) \]
+\[ c = (\mathbf{C} - \mathbf{Q}) \cdot (\mathbf{C} - \mathbf{Q}) - r^2 \]</p>
+<p>Using all of the above you can solve for \( t \), but there is a square root part that can be either positive (meaning two real solutions), negative (meaning no real solutions), or zero (meaning one real solution). In graphics, the algebra almost always relates very directly to the geometry. What we have is:</p>
+<p><img src="chapters/adding_a_sphere/../../imgs/fig-1.05-ray-sphere.jpg" alt="Ray-sphere intersection results" />
+<strong>Figure 5:</strong> <em>Ray-sphere intersection results</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
+<p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index f31dc16..e3d9091 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,67 +1,81 @@
+</span> use code::{
+     color::{Color, write_color},
+     ray::Ray,
+<span class="boring">-    vec3::{Point3, Vec3, unit_vector},
+</span>+    vec3::{Point3, Vec3, dot, unit_vector},
+ };
+ 
++fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
++    let oc = center - r.origin();
++    let a = dot(r.direction(), r.direction());
++    let b = -2.0 * dot(r.direction(), oc);
++    let c = dot(oc, oc) - radius * radius;
++    let discriminant = b * b - 4.0 * a * c;
++
++    discriminant &gt;= 0.0
++}
++
+ fn ray_color(r: Ray) -&gt; Color {
++    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
++        return Color::new(1.0, 0.0, 0.0);
++    }
++
+     let unit_direction = unit_vector(r.direction());
+     let a = 0.5 * (unit_direction.y() + 1.0);
+     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+ }
+<span class="boring"> 
+</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">     // Image
+</span><span class="boring"> 
+</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // Camera
+</span><span class="boring"> 
+</span><span class="boring">     let focal_length = 1.0;
+</span><span class="boring">     let viewport_height = 2.0;
+</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the location of the upper left pixel.
+</span><span class="boring">     let viewport_upper_left =
+</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring">     println!("P3");
+</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">     println!("255");
+</span><span class="boring"> 
+</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         for i in 0..IMAGE_WIDTH {
+</span><span class="boring">             let pixel_center =
+</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">             let ray_direction = pixel_center - camera_center;
+</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring"> 
+</span><span class="boring">             let pixel_color = ray_color(r);
+</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">     Ok(())
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 11:</strong> [<a href="chapters/adding_a_sphere/TODO">main.rs</a>] <em>Rendering a red sphere</em></p>
+<p>What we get is this:</p>
+<img style="width: 100%" src="chapters/adding_a_sphere/../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
+<p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            MathJax.Hub.Register.StartupHook('End', function() {
+                window.setTimeout(window.print, 100);
+            });
+        });
+        </script>
+
+    </div>
+    </body>
+</html>
