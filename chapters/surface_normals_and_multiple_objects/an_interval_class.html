@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Creating Our First Raytraced Image - Ray Tracing in One Weekend (Rust)</title>
+        <title>An Interval Class - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,35 +168,226 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
-<p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
+                        <h2 id="an-interval-class"><a class="header" href="#an-interval-class">An Interval Class</a></h2>
+<p>Before we continue, we'll implement an interval class to manage real-valued intervals with a minimum and a maximum. We'll end up using this class quite often as we proceed.</p>
+<pre><code class="language-rust norun noplayground">#[derive(Debug, Clone, Copy)]
+pub struct Interval {
+    pub min: f64,
+    pub max: f64,
+}
+
+impl Default for Interval {
+    fn default() -&gt; Self {
+        Self::EMPTY
+    }
+}
+
+impl Interval {
+    pub const EMPTY: Self = Self {
+        min: f64::INFINITY,
+        max: f64::NEG_INFINITY,
+    };
+
+    pub const UNIVERSE: Self = Self {
+        min: f64::NEG_INFINITY,
+        max: f64::INFINITY,
+    };
+
+    pub fn new(min: f64, max: f64) -&gt; Self {
+        Self { min, max }
+    }
+
+    pub fn size(&amp;self) -&gt; f64 {
+        self.max - self.min
+    }
+
+    pub fn contains(&amp;self, x: f64) -&gt; bool {
+        self.min &lt;= x &amp;&amp; x &lt;= self.max
+    }
+
+    pub fn surrounds(&amp;self, x: f64) -&gt; bool {
+        self.min &lt; x &amp;&amp; x &lt; self.max
+    }
+}</code></pre>
+<p><strong>Listing 31:</strong> [<a href="TODO">interval.rs</a>] <em>Introducing the new interval class</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/prelude.rs b/src/prelude.rs
+</span><span class="boring">index fcd4621..2ec9487 100644
+</span><span class="boring">--- a/src/prelude.rs
+</span><span class="boring">+++ b/src/prelude.rs
+</span><span class="boring">@@ -1,14 +1,14 @@
+</span><span class="boring"> pub use log::*;
+</span><span class="boring"> 
+</span><span class="boring"> // Rust Std usings
+</span><span class="boring"> 
+</span><span class="boring"> pub use std::rc::Rc;
+</span><span class="boring"> 
+</span><span class="boring"> // Constants
+</span><span class="boring"> 
+</span><span class="boring"> pub const INFINITY: f64 = f64::INFINITY;
+</span><span class="boring"> pub const PI: f64 = std::f64::consts::PI;
+</span><span class="boring"> 
+</span> // Common Headers
+ 
+<span class="boring">-pub use crate::{color::*, ray::*, vec3::*};
+</span>+pub use crate::{color::*, interval::Interval, ray::*, vec3::*};</code></pre>
+<p><strong>Listing 32:</strong> [<a href="TODO">prelude.rs</a>] <em>Including the new interval class</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
+</span><span class="boring">index a7aab5a..1b65b92 100644
+</span><span class="boring">--- a/src/hittable.rs
+</span><span class="boring">+++ b/src/hittable.rs
+</span><span class="boring">@@ -1,27 +1,27 @@
+</span><span class="boring"> use crate::prelude::*;
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct HitRecord {
+</span><span class="boring">     pub p: Point3,
+</span><span class="boring">     pub normal: Vec3,
+</span><span class="boring">     pub t: f64,
+</span><span class="boring">     pub front_face: bool,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl HitRecord {
+</span><span class="boring">     pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">         // Sets the hit record normal vector.
+</span><span class="boring">         // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring"> 
+</span><span class="boring">         self.front_face = dot(r.direction(), outward_normal) &lt; 0.0;
+</span><span class="boring">         self.normal = if self.front_face {
+</span><span class="boring">             outward_normal
+</span><span class="boring">         } else {
+</span><span class="boring">             -outward_normal
+</span><span class="boring">         };
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> pub trait Hittable {
+<span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt;;
+ }</code></pre>
+<p><strong>Listing 33:</strong> [<a href="TODO">hittable.rs</a>] <em>hittable::hit() using interval</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
+</span><span class="boring">index 7841161..4647aa5 100644
+</span><span class="boring">--- a/src/hittable_list.rs
+</span><span class="boring">+++ b/src/hittable_list.rs
+</span><span class="boring">@@ -1,32 +1,32 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">     prelude::*,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Default)]
+</span><span class="boring"> pub struct HittableList {
+</span><span class="boring">     pub objects: Vec&lt;Rc&lt;dyn Hittable&gt;&gt;,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl HittableList {
+</span><span class="boring">     pub fn new() -&gt; Self {
+</span><span class="boring">         Self::default()
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn clear(&amp;mut self) {
+</span><span class="boring">         self.objects.clear();
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn add(&amp;mut self, object: Rc&lt;dyn Hittable&gt;) {
+</span><span class="boring">         self.objects.push(object);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Hittable for HittableList {
+<span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+</span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt; {
+         self.objects
+             .iter()
+<span class="boring">-            .filter_map(|obj| obj.hit(r, ray_tmin, ray_tmax))
+</span>+            .filter_map(|obj| obj.hit(r, ray_t))
+             .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
+     }
+ }</code></pre>
+<p><strong>Listing 34:</strong> [<a href="TODO">hittable_list.rs</a>] <em>hittable_list::hit() using interval</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
+</span><span class="boring">index 9de9f72..a2710b4 100644
+</span><span class="boring">--- a/src/sphere.rs
+</span><span class="boring">+++ b/src/sphere.rs
+</span><span class="boring">@@ -1,56 +1,56 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">     prelude::*,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Clone, Copy)]
+</span><span class="boring"> pub struct Sphere {
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     radius: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sphere {
+</span><span class="boring">     pub fn new(center: Point3, radius: f64) -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             center,
+</span><span class="boring">             radius: f64::max(0.0, radius),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Hittable for Sphere {
+<span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+</span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt; {
+<span class="boring">         let oc = self.center - r.origin();
+</span><span class="boring">         let a = r.direction().length_squared();
+</span><span class="boring">         let h = dot(r.direction(), oc);
+</span><span class="boring">         let c = oc.length_squared() - self.radius * self.radius;
+</span><span class="boring"> 
+</span><span class="boring">         let discriminant = h * h - a * c;
+</span><span class="boring">         if discriminant &lt; 0.0 {
+</span><span class="boring">             return None;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let sqrtd = f64::sqrt(discriminant);
+</span> 
+         // Find the nearest root that lies in the acceptable range.
+         let mut root = (h - sqrtd) / a;
+<span class="boring">-        if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span>+        if !ray_t.surrounds(root) {
+             root = (h + sqrtd) / a;
+<span class="boring">-            if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span>+            if !ray_t.surrounds(root) {
+                 return None;
+             }
+         }
+ 
+<span class="boring">         let t = root;
+</span><span class="boring">         let p = r.at(t);
+</span><span class="boring">         let mut rec = HitRecord {
+</span><span class="boring">             t,
+</span><span class="boring">             p,
+</span><span class="boring">             ..Default::default()
+</span><span class="boring">         };
+</span><span class="boring">         let outward_normal = (p - self.center) / self.radius;
+</span><span class="boring">         rec.set_face_normal(r, outward_normal);
+</span><span class="boring"> 
+</span><span class="boring">         Some(rec)
+</span>     }
+ }</code></pre>
+<p><strong>Listing 35:</strong> [<a href="TODO">sphere.rs</a>] <em>sphere using interval</em></p>
+<br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index f31dc16..e3d9091 100644
+</span><span class="boring">index 59c000b..a8d3932 100644
 </span><span class="boring">--- a/src/main.rs
 </span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,67 +1,81 @@
-</span> use code::{
-     color::{Color, write_color},
-     ray::Ray,
-<span class="boring">-    vec3::{Point3, Vec3, unit_vector},
-</span>+    vec3::{Point3, Vec3, dot, unit_vector},
- };
+</span><span class="boring">@@ -1,74 +1,74 @@
+</span><span class="boring"> use code::{hittable::Hittable, hittable_list::HittableList, prelude::*, sphere::Sphere};
+</span><span class="boring"> 
+</span> fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">-    if let Some(rec) = world.hit(r, 0.0, INFINITY) {
+</span>+    if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+         return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+     }
  
-+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
-+    let oc = center - r.origin();
-+    let a = dot(r.direction(), r.direction());
-+    let b = -2.0 * dot(r.direction(), oc);
-+    let c = dot(oc, oc) - radius * radius;
-+    let discriminant = b * b - 4.0 * a * c;
-+
-+    discriminant &gt;= 0.0
-+}
-+
- fn ray_color(r: Ray) -&gt; Color {
-+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-+        return Color::new(1.0, 0.0, 0.0);
-+    }
-+
      let unit_direction = unit_vector(r.direction());
      let a = 0.5 * (unit_direction.y() + 1.0);
      (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
@@ -213,6 +404,13 @@
 </span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
 </span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
 </span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // World
+</span><span class="boring"> 
+</span><span class="boring">     let mut world = HittableList::new();
+</span><span class="boring"> 
+</span><span class="boring">     world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+</span><span class="boring">     world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 </span><span class="boring"> 
 </span><span class="boring">     // Camera
 </span><span class="boring"> 
@@ -242,37 +440,32 @@
 </span><span class="boring">     println!("255");
 </span><span class="boring"> 
 </span><span class="boring">     for j in 0..IMAGE_HEIGHT {
-</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
 </span><span class="boring">         for i in 0..IMAGE_WIDTH {
 </span><span class="boring">             let pixel_center =
 </span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
 </span><span class="boring">             let ray_direction = pixel_center - camera_center;
 </span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
 </span><span class="boring"> 
-</span><span class="boring">             let pixel_color = ray_color(r);
+</span><span class="boring">             let pixel_color = ray_color(r, &amp;world);
 </span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
 </span><span class="boring">         }
 </span><span class="boring">     }
-</span><span class="boring">     log::info!("Done.");
+</span><span class="boring">     info!("Done.");
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 11:</strong> [<a href="TODO">main.rs</a>] <em>Rendering a red sphere</em></p>
-<p>What we get is this:</p>
-<img style="width: 100%" src="../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
-<p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+<p><strong>Listing 36:</strong> [<a href="TODO">main.rs</a>] <em>The new main using interval</em></p>
+<br>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/surface_normals_and_multiple_objects/common_constants_and_utility_functions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -280,13 +473,10 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/surface_normals_and_multiple_objects/common_constants_and_utility_functions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
             </nav>
 
         </div>

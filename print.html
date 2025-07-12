@@ -998,6 +998,1247 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 <p>What we get is this:</p>
 <img style="width: 100%" src="chapters/adding_a_sphere/../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
 <p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="shading-with-surface-normals"><a class="header" href="#shading-with-surface-normals">Shading with Surface Normals</a></h2>
+<p>First, let’s get ourselves a surface normal so we can shade. This is a vector that is perpendicular to the surface at the point of intersection.</p>
+<p>We have a key design decision to make for normal vectors in our code: whether normal vectors will have an arbitrary length, or will be normalized to unit length.</p>
+<p>It is tempting to skip the expensive square root operation involved in normalizing the vector, in case it's not needed. In practice, however, there are three important observations. First, if a unit-length normal vector is <em>ever</em> required, then you might as well do it up front once, instead of over and over again “just in case” for every location where unit-length is required. Second, we <em>do</em> require unit-length normal vectors in several places. Third, if you require normal vectors to be unit length, then you can often efficiently generate that vector with an understanding of the specific geometry class, in its constructor, or in the <code>hit()</code> function. For example, sphere normals can be made unit length simply by dividing by the sphere radius, avoiding the square root entirely.</p>
+<p>Given all of this, we will adopt the policy that all normal vectors will be of unit length.</p>
+<p>For a sphere, the outward normal is in the direction of the hit point minus the center:</p>
+<p><img src="chapters/surface_normals_and_multiple_objects/../../imgs/fig-1.06-sphere-normal.jpg" alt="Sphere surface-normal geometry" /></p>
+<p><strong>Figure 6:</strong> <em>Sphere surface-normal geometry</em></p>
+<br>
+<p>On the earth, this means that the vector from the earth’s center to you points straight up. Let’s throw that into the code now, and shade it. We don’t have any lights or anything yet, so let’s just visualize the normals with a color map. A common trick used for visualizing normals (because it’s easy and somewhat intuitive to assume \( \mathbf{n} \) is a unit length vector — so each component is between \( −1 \) and \( 1 \)) is to map each component to the interval from \( 0 \) to \( 1 \), and then map \( (x, y, z) \) to \( (red, green, blue) \). For the normal, we need the hit point, not just whether we hit or not (which is all we're calculating at the moment). We only have one sphere in the scene, and it's directly in front of the camera, so we won't worry about negative values of \( t \) yet. We'll just assume the closest hit point (smallest \( t \)) is the one that we want. These changes in the code let us compute and visualize \( \mathbf{n} \):</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index e3d9091..405ca4b 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,81 +1,82 @@
+</span> use code::{
+     color::{Color, write_color},
+     ray::Ray,
+     vec3::{Point3, Vec3, dot, unit_vector},
+ };
+ 
+<span class="boring">-fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
+</span>+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; Option&lt;f64&gt; {
+     let oc = center - r.origin();
+     let a = dot(r.direction(), r.direction());
+     let b = -2.0 * dot(r.direction(), oc);
+     let c = dot(oc, oc) - radius * radius;
+     let discriminant = b * b - 4.0 * a * c;
+ 
+<span class="boring">-    discriminant &gt;= 0.0
+</span>+    (discriminant &gt;= 0.0).then(|| (-b - f64::sqrt(discriminant)) / (2.0 * a))
+ }
+ 
+ fn ray_color(r: Ray) -&gt; Color {
+<span class="boring">-    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+</span><span class="boring">-        return Color::new(1.0, 0.0, 0.0);
+</span>+    if let Some(t) = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
++        let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
++        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+     }
+ 
+     let unit_direction = unit_vector(r.direction());
+     let a = 0.5 * (unit_direction.y() + 1.0);
+     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+ }
+ 
+ fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+     // Image
+ 
+     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+<span class="boring">     const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // Camera
+</span><span class="boring"> 
+</span><span class="boring">     let focal_length = 1.0;
+</span><span class="boring">     let viewport_height = 2.0;
+</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the location of the upper left pixel.
+</span><span class="boring">     let viewport_upper_left =
+</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring">     println!("P3");
+</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">     println!("255");
+</span><span class="boring"> 
+</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         for i in 0..IMAGE_WIDTH {
+</span><span class="boring">             let pixel_center =
+</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">             let ray_direction = pixel_center - camera_center;
+</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring"> 
+</span><span class="boring">             let pixel_color = ray_color(r);
+</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">     Ok(())
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 12:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>Rendering surface normals on a sphere</em></p>
+<br>
+<p>And that yields this picture:</p>
+<img style="width: 100%" src="chapters/surface_normals_and_multiple_objects/../../imgs/img-1.04-normals-sphere.png" alt="A sphere colored according to its normal vectors">
+<p><strong>Image 4:</strong> A sphere colored according to its normal vectors</p>
+<br>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="simplifying-the-ray-sphere-intersection-code"><a class="header" href="#simplifying-the-ray-sphere-intersection-code">Simplifying the Ray-Sphere Intersection Code</a></h2>
+<p>Let’s revisit the ray-sphere function:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use code::{
+</span><span class="boring">    color::{Color, write_color},
+</span><span class="boring">    ray::Ray,
+</span><span class="boring">    vec3::{Point3, Vec3, dot, unit_vector},
+</span><span class="boring">};
+</span><span class="boring">
+</span>fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; Option&lt;f64&gt; {
+    let oc = center - r.origin();
+    let a = dot(r.direction(), r.direction());
+    let b = -2.0 * dot(r.direction(), oc);
+    let c = dot(oc, oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+
+    (discriminant &gt;= 0.0).then(|| (-b - f64::sqrt(discriminant)) / (2.0 * a))
+}
+<span class="boring">
+</span><span class="boring">fn ray_color(r: Ray) -&gt; Color {
+</span><span class="boring">    if let Some(t) = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+</span><span class="boring">        let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+</span><span class="boring">        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    let unit_direction = unit_vector(r.direction());
+</span><span class="boring">    let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">    (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">    // Image
+</span><span class="boring">
+</span><span class="boring">    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">    const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring">
+</span><span class="boring">    // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">    const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">        let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">        if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">    };
+</span><span class="boring">
+</span><span class="boring">    // Camera
+</span><span class="boring">
+</span><span class="boring">    let focal_length = 1.0;
+</span><span class="boring">    let viewport_height = 2.0;
+</span><span class="boring">    let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">    let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">
+</span><span class="boring">    // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">    let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">    let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">
+</span><span class="boring">    // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">    let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">    let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring">
+</span><span class="boring">    // Calculate the location of the upper left pixel.
+</span><span class="boring">    let viewport_upper_left =
+</span><span class="boring">        camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">    let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring">
+</span><span class="boring">    // Render
+</span><span class="boring">
+</span><span class="boring">    env_logger::init();
+</span><span class="boring">    println!("P3");
+</span><span class="boring">    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">    println!("255");
+</span><span class="boring">
+</span><span class="boring">    for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">        log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">        for i in 0..IMAGE_WIDTH {
+</span><span class="boring">            let pixel_center =
+</span><span class="boring">                pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">            let ray_direction = pixel_center - camera_center;
+</span><span class="boring">            let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring">
+</span><span class="boring">            let pixel_color = ray_color(r);
+</span><span class="boring">            write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">    log::info!("Done.");
+</span><span class="boring">
+</span><span class="boring">    Ok(())
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 13:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>Ray-sphere intersection code (before)</em></p>
+<br>
+<p>First, recall that a vector dotted with itself is equal to the squared length of that vector.</p>
+<p>Second, notice how the equation for \( b \) has a factor of negative two in it. Consider what happens to the quadratic equation if \( b = 2h \):</p>
+<p>\[ \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\]
+\[= \frac{-(-2h) \pm \sqrt{(-2h)^2 - 4ac}}{2a}\]
+\[= \frac{2h \pm 2 \sqrt{h^2 - ac}}{2a}\]
+\[= \frac{h \pm \sqrt{h^2 - ac}}{a}\]</p>
+<p>This simplifies nicely, so we'll use it. So solving for \( h \):</p>
+<p>\[b = -2 \mathbf{d} \cdot (\mathbf{C} - \mathbf{Q}) \]
+\[b = -2h \]
+\[h = \frac{b}{-2} = \mathbf{d} \cdot (\mathbf{C} - \mathbf{Q}) \]</p>
+<p>Using these observations, we can now simplify the sphere-intersection code to this:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 405ca4b..1f26e3d 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,82 +1,82 @@
+</span><span class="boring"> use code::{
+</span><span class="boring">     color::{Color, write_color},
+</span><span class="boring">     ray::Ray,
+</span><span class="boring">     vec3::{Point3, Vec3, dot, unit_vector},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span> fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; Option&lt;f64&gt; {
+     let oc = center - r.origin();
+<span class="boring">-    let a = dot(r.direction(), r.direction());
+</span><span class="boring">-    let b = -2.0 * dot(r.direction(), oc);
+</span><span class="boring">-    let c = dot(oc, oc) - radius * radius;
+</span><span class="boring">-    let discriminant = b * b - 4.0 * a * c;
+</span>+    let a = r.direction().length_squared();
++    let h = dot(r.direction(), oc);
++    let c = oc.length_squared() - radius * radius;
++    let discriminant = h * h - a * c;
+ 
+<span class="boring">-    (discriminant &gt;= 0.0).then(|| (-b - f64::sqrt(discriminant)) / (2.0 * a))
+</span>+    (discriminant &gt;= 0.0).then(|| (h - f64::sqrt(discriminant)) / a)
+ }
+<span class="boring"> 
+</span><span class="boring"> fn ray_color(r: Ray) -&gt; Color {
+</span><span class="boring">     if let Some(t) = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+</span><span class="boring">         let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+</span><span class="boring">         return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     let unit_direction = unit_vector(r.direction());
+</span><span class="boring">     let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">     // Image
+</span><span class="boring"> 
+</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // Camera
+</span><span class="boring"> 
+</span><span class="boring">     let focal_length = 1.0;
+</span><span class="boring">     let viewport_height = 2.0;
+</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the location of the upper left pixel.
+</span><span class="boring">     let viewport_upper_left =
+</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring">     println!("P3");
+</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">     println!("255");
+</span><span class="boring"> 
+</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         for i in 0..IMAGE_WIDTH {
+</span><span class="boring">             let pixel_center =
+</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">             let ray_direction = pixel_center - camera_center;
+</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring"> 
+</span><span class="boring">             let pixel_color = ray_color(r);
+</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">     Ok(())
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 14:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>Ray-sphere intersection code (after)</em></p>
+<br>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="an-abstraction-for-hittable-objects"><a class="header" href="#an-abstraction-for-hittable-objects">An Abstraction for Hittable Objects</a></h2>
+<p>Now, how about more than one sphere? While it is tempting to have an array of spheres, a very clean solution is to make an “abstract class” for anything a ray might hit, and make both a sphere and a list of spheres just something that can be hit. What that class should be called is something of a quandary — calling it an “object” would be good if not for “object oriented” programming. “Surface” is often used, with the weakness being maybe we will want volumes (fog, clouds, stuff like that). “hittable” emphasizes the member function that unites them. I don’t love any of these, but we'll go with “hittable”.</p>
+<p>This <code>hittable</code> abstract class will have a <code>hit</code> function that takes in a ray. <sup class="footnote-reference" id="fr-63a-1"><a href="#footnote-63a">1</a></sup> Most ray tracers have found it convenient to add a valid interval for hits \( t_{min} \) to \( t_{max} \), so the hit only “counts” if \( t_{min} &lt; t &lt; t_{max} \). For the initial rays this is positive \( t \), but as we will see, it can simplify our code to have an interval \( t_{min} \) to \( t_{max} \). One design question is whether to do things like compute the normal if we hit something. We might end up hitting something closer as we do our search, and we will only need the normal of the closest thing. I will go with the simple solution and compute a bundle of stuff I will store in some structure. Here’s the abstract class:</p>
+<pre><code class="language-rust norun noplayground">use crate::{
+    ray::Ray,
+    vec3::{Point3, Vec3},
+};
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct HitRecord {
+    pub p: Point3,
+    pub normal: Vec3,
+    pub t: f64,
+}
+
+pub trait Hittable {
+    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+}</code></pre>
+<p><strong>Listing 15:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>The hittable class</em></p>
+<br>
+<p>And here’s the sphere:</p>
+<pre><code class="language-rust norun noplayground">use crate::{
+    hittable::{HitRecord, Hittable},
+    ray::Ray,
+    vec3::{Point3, dot},
+};
+
+#[derive(Debug, Clone, Copy)]
+pub struct Sphere {
+    center: Point3,
+    radius: f64,
+}
+
+impl Sphere {
+    pub fn new(center: Point3, radius: f64) -&gt; Self {
+        Self {
+            center,
+            radius: f64::max(0.0, radius),
+        }
+    }
+}
+
+impl Hittable for Sphere {
+    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+        let oc = self.center - r.origin();
+        let a = r.direction().length_squared();
+        let h = dot(r.direction(), oc);
+        let c = oc.length_squared() - self.radius * self.radius;
+
+        let discriminant = h * h - a * c;
+        if discriminant &lt; 0.0 {
+            return None;
+        }
+
+        let sqrtd = f64::sqrt(discriminant);
+
+        // Find the nearest root that lies in the acceptable range.
+        let mut root = (h - sqrtd) / a;
+        if root &lt;= ray_tmin || ray_tmax &lt;= root {
+            root = (h + sqrtd) / a;
+            if root &lt;= ray_tmin || ray_tmax &lt;= root {
+                return None;
+            }
+        }
+
+        let t = root;
+        let p = r.at(t);
+        let rec = HitRecord {
+            t,
+            p,
+            normal: (p - self.center) / self.radius,
+        };
+
+        Some(rec)
+    }
+}</code></pre>
+<p><strong>Listing 16:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>The sphere class</em></p>
+<br>
+<p>(Note here that we use the C++ standard function <code>std::fmax()</code>, which returns the maximum of the two floating-point arguments. Similarly, we will later use <code>std::fmin()</code>, which returns the minimum of the two floating-point arguments.) <sup class="footnote-reference" id="fr-63b-1"><a href="#footnote-63b">2</a></sup></p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-63a">
+<p>A simple Rust Trait will be used instead. <a href="#fr-63a-1">↩</a></p>
+</li>
+<li id="footnote-63b">
+<p>The Rust standard library provides the functions <code>f64::max()</code> and <code>f64::min()</code>. <a href="#fr-63b-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="front-faces-versus-back-faces"><a class="header" href="#front-faces-versus-back-faces">Front Faces Versus Back Faces</a></h2>
+<p>The second design decision for normals is whether they should always point out. At present, the normal found will always be in the direction of the center to the intersection point (the normal points out). If the ray intersects the sphere from the outside, the normal points against the ray. If the ray intersects the sphere from the inside, the normal (which always points out) points with the ray. Alternatively, we can have the normal always point against the ray. If the ray is outside the sphere, the normal will point outward, but if the ray is inside the sphere, the normal will point inward.</p>
+<p><img src="chapters/surface_normals_and_multiple_objects/../../imgs/fig-1.07-normal-sides.jpg" alt="Possible directions for sphere surface-normal geometry" /></p>
+<p><strong>Figure 7:</strong> <em>Possible directions for sphere surface-normal geometry</em></p>
+<br>
+<p>We need to choose one of these possibilities because we will eventually want to determine which side of the surface that the ray is coming from. This is important for objects that are rendered differently on each side, like the text on a two-sided sheet of paper, or for objects that have an inside and an outside, like glass balls.</p>
+<p>If we decide to have the normals always point out, then we will need to determine which side the ray is on when we color it. We can figure this out by comparing the ray with the normal. If the ray and the normal face in the same direction, the ray is inside the object, if the ray and the normal face in the opposite direction, then the ray is outside the object. This can be determined by taking the dot product of the two vectors, where if their dot is positive, the ray is inside the sphere.</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{
+</span><span class="boring">    ray::Ray,
+</span><span class="boring">    vec3::{Point3, Vec3, dot},
+</span><span class="boring">};
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct HitRecord {
+</span><span class="boring">    pub p: Point3,
+</span><span class="boring">    pub normal: Vec3,
+</span><span class="boring">    pub t: f64,
+</span><span class="boring">    pub front_face: bool,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl HitRecord {
+</span><span class="boring">    pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">        // Sets the hit record normal vector.
+</span><span class="boring">        // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring">
+</span><span class="boring">        let normal;
+</span><span class="boring">        let front_face;
+</span>        if dot(r.direction(), outward_normal) &gt; 0.0 {
+            // ray is inside the sphere
+<span class="boring">            normal = -outward_normal;
+</span><span class="boring">            front_face = false;
+</span>        } else {
+            // ray is outside the sphere
+<span class="boring">            normal = outward_normal;
+</span><span class="boring">            front_face = true;
+</span>        }
+<span class="boring">
+</span><span class="boring">        self.front_face = front_face;
+</span><span class="boring">        self.normal = normal;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">pub trait Hittable {
+</span><span class="boring">    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 17:</strong> <em>Comparing the ray and the normal</em></p>
+<br>
+<p>If we decide to have the normals always point against the ray, we won't be able to use the dot product to determine which side of the surface the ray is on. Instead, we would need to store that information:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{
+</span><span class="boring">    ray::Ray,
+</span><span class="boring">    vec3::{Point3, Vec3, dot},
+</span><span class="boring">};
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct HitRecord {
+</span><span class="boring">    pub p: Point3,
+</span><span class="boring">    pub normal: Vec3,
+</span><span class="boring">    pub t: f64,
+</span><span class="boring">    pub front_face: bool,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl HitRecord {
+</span><span class="boring">    pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">        // Sets the hit record normal vector.
+</span><span class="boring">        // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring">
+</span><span class="boring">        let normal;
+</span>        let front_face;
+        if dot(r.direction(), outward_normal) &gt; 0.0 {
+            // ray is inside the sphere
+            normal = -outward_normal;
+            front_face = false;
+        } else {
+            // ray is outside the sphere
+            normal = outward_normal;
+            front_face = true;
+        }
+<span class="boring">
+</span><span class="boring">        self.front_face = front_face;
+</span><span class="boring">        self.normal = normal;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">pub trait Hittable {
+</span><span class="boring">    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 18:</strong> <em>Remembering the side of the surface</em></p>
+<br>
+<p>We can set things up so that normals always point “outward” from the surface, or always point against the incident ray. This decision is determined by whether you want to determine the side of the surface at the time of geometry intersection or at the time of coloring. In this book we have more material types than we have geometry types, so we'll go for less work and put the determination at geometry time. This is simply a matter of preference, and you'll see both implementations in the literature.</p>
+<p>We add the <code>front_face</code> bool to the <code>hit_record</code> class. We'll also add a function to solve this calculation for us: <code>set_face_normal()</code>. For convenience we will assume that the vector passed to the new <code>set_face_normal()</code> function is of unit length. We could always normalize the parameter explicitly, but it's more efficient if the geometry code does this, as it's usually easier when you know more about the specific geometry.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
+</span><span class="boring">index b8a3fcf..8ced826 100644
+</span><span class="boring">--- a/src/hittable.rs
+</span><span class="boring">+++ b/src/hittable.rs
+</span><span class="boring">@@ -1,15 +1,30 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     ray::Ray,
+</span><span class="boring">-    vec3::{Point3, Vec3},
+</span><span class="boring">+    vec3::{Point3, Vec3, dot},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span> #[derive(Debug, Default, Clone, Copy)]
+ pub struct HitRecord {
+     pub p: Point3,
+     pub normal: Vec3,
+     pub t: f64,
++    pub front_face: bool,
++}
++
++impl HitRecord {
++    pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
++        // Sets the hit record normal vector.
++        // NOTE: the parameter `outward_normal` is assumed to have unit length.
++
++        self.front_face = dot(r.direction(), outward_normal) &lt; 0.0;
++        self.normal = if self.front_face {
++            outward_normal
++        } else {
++            -outward_normal
++        };
++    }
+ }
+<span class="boring"> 
+</span><span class="boring"> pub trait Hittable {
+</span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 19:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>Adding front-face tracking to hit_record</em></p>
+<br>
+<p>And then we add the surface side determination to the class:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
+</span><span class="boring">index aa651e9..86d3cbb 100644
+</span><span class="boring">--- a/src/sphere.rs
+</span><span class="boring">+++ b/src/sphere.rs
+</span><span class="boring">@@ -1,56 +1,57 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">     ray::Ray,
+</span><span class="boring">     vec3::{Point3, dot},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Clone, Copy)]
+</span><span class="boring"> pub struct Sphere {
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     radius: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sphere {
+</span><span class="boring">     pub fn new(center: Point3, radius: f64) -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             center,
+</span><span class="boring">             radius: f64::max(0.0, radius),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Hittable for Sphere {
+     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+<span class="boring">         let oc = self.center - r.origin();
+</span><span class="boring">         let a = r.direction().length_squared();
+</span><span class="boring">         let h = dot(r.direction(), oc);
+</span><span class="boring">         let c = oc.length_squared() - self.radius * self.radius;
+</span><span class="boring"> 
+</span><span class="boring">         let discriminant = h * h - a * c;
+</span><span class="boring">         if discriminant &lt; 0.0 {
+</span><span class="boring">             return None;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let sqrtd = f64::sqrt(discriminant);
+</span><span class="boring"> 
+</span><span class="boring">         // Find the nearest root that lies in the acceptable range.
+</span><span class="boring">         let mut root = (h - sqrtd) / a;
+</span><span class="boring">         if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span><span class="boring">             root = (h + sqrtd) / a;
+</span><span class="boring">             if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span><span class="boring">                 return None;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span> 
+         let t = root;
+         let p = r.at(t);
+<span class="boring">-        let rec = HitRecord {
+</span>+        let mut rec = HitRecord {
+             t,
+             p,
+<span class="boring">-            normal: (p - self.center) / self.radius,
+</span>             ..Default::default()
+         };
++        let outward_normal = (p - self.center) / self.radius;
++        rec.set_face_normal(r, outward_normal);
+ 
+         Some(rec)
+     }
+ }</code></pre>
+<p><strong>Listing 20:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>The sphere class with normal determination</em></p>
+<br>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="a-list-of-hittable-objects"><a class="header" href="#a-list-of-hittable-objects">A List of Hittable Objects</a></h2>
+<p>We have a generic object called a <code>hittable</code> that the ray can intersect with. We now add a class that stores a list of <code>hittables</code>:</p>
+<pre><code class="language-rust norun noplayground">use std::rc::Rc;
+
+use crate::{
+    hittable::{HitRecord, Hittable},
+    ray::Ray,
+};
+
+#[derive(Default)]
+pub struct HittableList {
+    pub objects: Vec&lt;Rc&lt;dyn Hittable&gt;&gt;,
+}
+
+impl HittableList {
+    pub fn new() -&gt; Self {
+        Self::default()
+    }
+
+    pub fn clear(&amp;mut self) {
+        self.objects.clear();
+    }
+
+    pub fn add(&amp;mut self, object: Rc&lt;dyn Hittable&gt;) {
+        self.objects.push(object);
+    }
+}
+
+impl Hittable for HittableList {
+    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+        self.objects
+            .iter()
+            .filter_map(|obj| obj.hit(r, ray_tmin, ray_tmax))
+            .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
+    }
+}</code></pre>
+<p><strong>Listing 21:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable_list.rs</a>] <em>The hittable_list class</em></p>
+<br>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="some-new-c-features-1"><a class="header" href="#some-new-c-features-1">Some New C++ Features <sup class="footnote-reference" id="fr-66a-1"><a href="#footnote-66a">1</a></sup></a></h2>
+<p>The <code>hittable_list</code> class code uses some C++ features that may trip you up if you're not normally a C++ programmer: <code>vector</code>, <code>shared_ptr</code>, and <code>make_shared</code>. <sup class="footnote-reference" id="fr-66b-1"><a href="#footnote-66b">2</a></sup></p>
+ <!-- It is possible to use `Arc` instead for `Rc` if using multithreading and insert a `Cell` type to allow for interior mutability, but since the scene is setup once and does not change over the course of the program lifetime a simple `Rc` is sufficient. -->
+<p><code>shared_ptr&lt;type&gt;</code> is a pointer to some allocated type, with reference-counting semantics. Every time you assign its value to another shared pointer (usually with a simple assignment), the reference count is incremented. As shared pointers go out of scope (like at the end of a block or function), the reference count is decremented. Once the count goes to zero, the object is safely deleted. <sup class="footnote-reference" id="fr-66c-1"><a href="#footnote-66c">3</a></sup></p>
+<p>Typically, a shared pointer is first initialized with a newly-allocated object, something like this:</p>
+<pre><pre class="playground"><code class="language-rust norun nodiff"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let double_ptr: Rc&lt;double&gt; = Rc::new(0.37);
+let vec3_ptr: Rc&lt;Vec3&gt; = Rc::new(Vec3::new(1.414214, 2.718281, 1.618034));
+let sphere_ptr: Rc&lt;Sphere&gt; = Rc::new(Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0));
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Listing 22:</strong> <em>An example allocation using shared_ptr</em></p>
+<br>
+<p><code>make_shared&lt;thing&gt;(thing_constructor_params ...)</code> allocates a new instance of type thing, using the constructor parameters. It returns a <code>shared_ptr&lt;thing&gt;</code>. <sup class="footnote-reference" id="fr-66d-1"><a href="#footnote-66d">4</a></sup></p>
+<p>Since the type can be automatically deduced by the return type of <code>make_shared&lt;type&gt;(...)</code>, the above lines can be more simply expressed using C++'s <code>auto</code> type specifier: <sup class="footnote-reference" id="fr-66e-1"><a href="#footnote-66e">5</a></sup></p>
+<pre><pre class="playground"><code class="language-rust norun nodiff"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let double_ptr = Rc::new(0.37);
+let vec3_ptr = Rc::new(Vec3::new(1.414214, 2.718281, 1.618034));
+let sphere_ptr = Rc::new(Sphere::new(Point3::new(0.0, 0.0, 0.0), 1.0));
+<span class="boring">}</span></code></pre></pre>
+<p><strong>Listing 23:</strong>  <em>An example allocation using shared_ptr with auto type</em></p>
+<br>
+<p>We'll use shared pointers in our code, because it allows multiple geometries to share a common instance (for example, a bunch of spheres that all use the same color material), and because it makes memory management automatic and easier to reason about.</p>
+<p><code>std::shared_ptr</code> is included with the <code>&lt;memory&gt;</code> header.<sup class="footnote-reference" id="fr-66f-1"><a href="#footnote-66f">6</a></sup></p>
+<p>The second C++ feature you may be unfamiliar with is <code>std::vector</code>. This is a generic array-like collection of an arbitrary type. Above, we use a collection of pointers to <code>hittable</code>. <code>std::vector</code> automatically grows as more values are added: <code>objects.push_back(object)</code> adds a value to the end of the <code>std::vector</code> member variable <code>objects</code>.</p>
+<p><code>std::vector</code> is included with the ``<vector>` header. <sup class="footnote-reference" id="fr-66g-1"><a href="#footnote-66g">7</a></sup></p>
+<p>Finally, the <code>using</code> statements in <a href="chapters/surface_normals_and_multiple_objects/a_list_of_hittable_objects.html">listing 21</a> tell the compiler that we'll be getting <code>shared_ptr</code> and <code>make_shared</code> from the <code>std</code> library, so we don't need to prefix these with <code>std::</code> every time we reference them.</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-66a">
+<p>This chapter can be safely skipped when the code of last chapter is clear. <a href="#fr-66a-1">↩</a></p>
+</li>
+<li id="footnote-66b">
+<p>The Rust equivalents are <code>Vec</code>, <code>Rc</code> and a simple <code>new</code> method of the reference counting smart pointer. <a href="#fr-66b-1">↩</a></p>
+</li>
+<li id="footnote-66c">
+<p>Here we use <code>Rc</code>. In contrast to the C++ <code>shared_ptr</code>, the contained value of an <code>Rc</code> is inmutable. Enclosing the value with a cell based type like for example <code>RefCell</code> would allow for interior mutability. However in this case, all objects are created on startup and do not change over the course of the program lifetime which is why a simple <code>Rc</code> is sufficient. <a href="#fr-66c-1">↩</a></p>
+</li>
+<li id="footnote-66d">
+<p>Rust has no constructors, instead it is convention to fill structs with the <code>new</code> method, the implementation of traits like <code>Default</code>, <code>From</code> or similar, or to use any method that returns <code>Self</code>. So technically something like <code>make_shared</code> does not exist in Rust. <a href="#fr-66d-1">↩</a></p>
+</li>
+<li id="footnote-66e">
+<p>The type annotations in the last listing were not nessecary, Rust's <code>let</code> declarations can in this case infere the types. <a href="#fr-66e-1">↩</a></p>
+</li>
+<li id="footnote-66f">
+<p><code>Rc</code> is found in <code>std::rc::Rc</code>. <a href="#fr-66f-1">↩</a></p>
+</li>
+<li id="footnote-66g">
+<p><code>Vec</code> is included in Rust's std prelude and does have to be included to be used. <a href="#fr-66g-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="common-constants-and-utility-functions"><a class="header" href="#common-constants-and-utility-functions">Common Constants and Utility Functions</a></h2>
+<p>We need some math constants that we conveniently define in their own header file. For now we only need infinity, but we will also throw our own definition of pi in there, which we will need later. We'll also throw common useful constants and future utility functions in here. This new header, <code>rtweekend.h</code>, will be our general main header file. <sup class="footnote-reference" id="fr-67a-1"><a href="#footnote-67a">1</a></sup></p>
+<pre><code class="language-rust norun noplayground">pub use log::*;
+
+// Rust Std usings
+
+pub use std::rc::Rc;
+
+// Constants
+
+pub const INFINITY: f64 = f64::INFINITY;
+pub const PI: f64 = std::f64::consts::PI;
+
+// Common Headers
+
+pub use crate::{color::*, ray::*, vec3::*};</code></pre>
+<p><strong>Listing 24:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">prelude.rs</a>] <em>The rtweekend.h common header</em></p>
+<br>
+<p>Program files will include <code>rtweekend.h</code> first, so all other header files (where the bulk of our code will reside) can implicitly assume that <code>rtweekend.h</code> has already been included. Header files still need to explicitly include any other necessary header files. We'll make some updates with these assumptions in mind.</p>
+<pre><code class="language-rust norun noplayground">// nothing changes</code></pre>
+<p><strong>Listing 25:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">color.rs</a>] <em>Assume rtweekend.h inclusion for color.h</em> <sup class="footnote-reference" id="fr-67b-1"><a href="#footnote-67b">2</a></sup></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
+</span><span class="boring">index 8ced826..a7aab5a 100644
+</span><span class="boring">--- a/src/hittable.rs
+</span><span class="boring">+++ b/src/hittable.rs
+</span><span class="boring">@@ -1,30 +1,27 @@
+</span>-use crate::{
+-    ray::Ray,
+-    vec3::{Point3, Vec3, dot},
+-};
++use crate::prelude::*;
+<span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct HitRecord {
+</span><span class="boring">     pub p: Point3,
+</span><span class="boring">     pub normal: Vec3,
+</span><span class="boring">     pub t: f64,
+</span><span class="boring">     pub front_face: bool,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl HitRecord {
+</span><span class="boring">     pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">         // Sets the hit record normal vector.
+</span><span class="boring">         // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring"> 
+</span><span class="boring">         self.front_face = dot(r.direction(), outward_normal) &lt; 0.0;
+</span><span class="boring">         self.normal = if self.front_face {
+</span><span class="boring">             outward_normal
+</span><span class="boring">         } else {
+</span><span class="boring">             -outward_normal
+</span><span class="boring">         };
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> pub trait Hittable {
+</span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 26:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>Assume rtweekend.h inclusion for hittable.h</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
+</span><span class="boring">index 95c24e4..7841161 100644
+</span><span class="boring">--- a/src/hittable_list.rs
+</span><span class="boring">+++ b/src/hittable_list.rs
+</span><span class="boring">@@ -1,34 +1,32 @@
+</span>-use std::rc::Rc;
+-
+ use crate::{
+     hittable::{HitRecord, Hittable},
+-    ray::Ray,
++    prelude::*,
+ };
+<span class="boring"> 
+</span><span class="boring"> #[derive(Default)]
+</span><span class="boring"> pub struct HittableList {
+</span><span class="boring">     pub objects: Vec&lt;Rc&lt;dyn Hittable&gt;&gt;,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl HittableList {
+</span><span class="boring">     pub fn new() -&gt; Self {
+</span><span class="boring">         Self::default()
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn clear(&amp;mut self) {
+</span><span class="boring">         self.objects.clear();
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn add(&amp;mut self, object: Rc&lt;dyn Hittable&gt;) {
+</span><span class="boring">         self.objects.push(object);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Hittable for HittableList {
+</span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+</span><span class="boring">         self.objects
+</span><span class="boring">             .iter()
+</span><span class="boring">             .filter_map(|obj| obj.hit(r, ray_tmin, ray_tmax))
+</span><span class="boring">             .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
+</span><span class="boring">     }
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 27:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable_list.rs</a>] <em>Assume rtweekend.h inclusion for hittable_list.h</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
+</span><span class="boring">index 86d3cbb..9de9f72 100644
+</span><span class="boring">--- a/src/sphere.rs
+</span><span class="boring">+++ b/src/sphere.rs
+</span><span class="boring">@@ -1,57 +1,56 @@
+</span> use crate::{
+     hittable::{HitRecord, Hittable},
+-    ray::Ray,
+-    vec3::{Point3, dot},
++    prelude::*,
+ };
+<span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Clone, Copy)]
+</span><span class="boring"> pub struct Sphere {
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     radius: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sphere {
+</span><span class="boring">     pub fn new(center: Point3, radius: f64) -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             center,
+</span><span class="boring">             radius: f64::max(0.0, radius),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Hittable for Sphere {
+</span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+</span><span class="boring">         let oc = self.center - r.origin();
+</span><span class="boring">         let a = r.direction().length_squared();
+</span><span class="boring">         let h = dot(r.direction(), oc);
+</span><span class="boring">         let c = oc.length_squared() - self.radius * self.radius;
+</span><span class="boring"> 
+</span><span class="boring">         let discriminant = h * h - a * c;
+</span><span class="boring">         if discriminant &lt; 0.0 {
+</span><span class="boring">             return None;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let sqrtd = f64::sqrt(discriminant);
+</span><span class="boring"> 
+</span><span class="boring">         // Find the nearest root that lies in the acceptable range.
+</span><span class="boring">         let mut root = (h - sqrtd) / a;
+</span><span class="boring">         if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span><span class="boring">             root = (h + sqrtd) / a;
+</span><span class="boring">             if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span><span class="boring">                 return None;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let t = root;
+</span><span class="boring">         let p = r.at(t);
+</span><span class="boring">         let mut rec = HitRecord {
+</span><span class="boring">             t,
+</span><span class="boring">             p,
+</span><span class="boring">             ..Default::default()
+</span><span class="boring">         };
+</span><span class="boring">         let outward_normal = (p - self.center) / self.radius;
+</span><span class="boring">         rec.set_face_normal(r, outward_normal);
+</span><span class="boring"> 
+</span><span class="boring">         Some(rec)
+</span><span class="boring">     }
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 28:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>Assume rtweekend.h inclusion for sphere.h</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground">// nothing changes</code></pre>
+<p><strong>Listing 29:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">vec3.rs</a>] <em>Assume rtweekend.h inclusion for vec3.h</em></p>
+<br>
+<p>And now the new main:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 1f26e3d..59c000b 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,82 +1,74 @@
+</span>-use code::{
+-    color::{Color, write_color},
+-    ray::Ray,
+-    vec3::{Point3, Vec3, dot, unit_vector},
+-};
+-
+-fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; Option&lt;f64&gt; {
+<span class="boring">-    let oc = center - r.origin();
+</span><span class="boring">-    let a = r.direction().length_squared();
+</span><span class="boring">-    let h = dot(r.direction(), oc);
+</span><span class="boring">-    let c = oc.length_squared() - radius * radius;
+</span><span class="boring">-    let discriminant = h * h - a * c;
+</span>-
+<span class="boring">-    (discriminant &gt;= 0.0).then(|| (h - f64::sqrt(discriminant)) / a)
+</span>-}
++use code::{hittable::Hittable, hittable_list::HittableList, prelude::*, sphere::Sphere};
+ 
+<span class="boring">-fn ray_color(r: Ray) -&gt; Color {
+</span><span class="boring">-    if let Some(t) = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+</span><span class="boring">-        let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
+</span><span class="boring">-        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+</span>+fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
++    if let Some(rec) = world.hit(r, 0.0, INFINITY) {
++        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+     }
+ 
+     let unit_direction = unit_vector(r.direction());
+     let a = 0.5 * (unit_direction.y() + 1.0);
+     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+ }
+ 
+ fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+     // Image
+ 
+     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+     const IMAGE_WIDTH: i32 = 400;
+ 
+     // Calculate the image height, and ensure that it's at least 1.
+     const IMAGE_HEIGHT: i32 = {
+         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+         if image_height &lt; 1 { 1 } else { image_height }
+     };
+ 
++    // World
++
++    let mut world = HittableList::new();
++
++    world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
++    world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
++
+     // Camera
+ 
+     let focal_length = 1.0;
+     let viewport_height = 2.0;
+     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+     let camera_center = Point3::new(0.0, 0.0, 0.0);
+ 
+     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+ 
+     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+ 
+     // Calculate the location of the upper left pixel.
+     let viewport_upper_left =
+         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+ 
+     // Render
+ 
+     env_logger::init();
+     println!("P3");
+     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+     println!("255");
+ 
+     for j in 0..IMAGE_HEIGHT {
+<span class="boring">-        log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span>+        info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+         for i in 0..IMAGE_WIDTH {
+             let pixel_center =
+                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+             let ray_direction = pixel_center - camera_center;
+             let r = Ray::new(camera_center, ray_direction);
+ 
+<span class="boring">-            let pixel_color = ray_color(r);
+</span>+            let pixel_color = ray_color(r, &amp;world);
+             write_color(std::io::stdout(), pixel_color)?;
+         }
+     }
+<span class="boring">-    log::info!("Done.");
+</span>+    info!("Done.");
+ 
+     Ok(())
+ }</code></pre>
+<p><strong>Listing 30:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>The new main with hittables</em></p>
+<br>
+<p>This yields a picture that is really just a visualization of where the spheres are located along with their surface normal. This is often a great way to view any flaws or specific characteristics of a geometric model.</p>
+<img style="width: 100%" src="chapters/surface_normals_and_multiple_objects/../../imgs/img-1.05-normals-sphere-ground.png" alt=" Resulting render of normals-colored sphere with ground">
+<p><strong>Image 5:</strong> <em>Resulting render of normals-colored sphere with ground</em></p>
+<br>
+<hr>
+<ol class="footnote-definition"><li id="footnote-67a">
+<p>In Rust it is common to create a prelude for common types, which we will do here instead. Note however, that there are at the momentan no <a href="https://github.com/rust-lang/rfcs/pull/890">plan to include a custom prelude as a language feature</a>, instead we need to import the prelude with <code>use crate::prelude::*</code>. <a href="#fr-67a-1">↩</a></p>
+</li>
+<li id="footnote-67b">
+<p>There is no need to use the prelude in <code>color.rs</code> only for the <code>Vec3</code> struct. The listing is still included to match the numbering of the original book series. <a href="#fr-67b-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h2 id="an-interval-class"><a class="header" href="#an-interval-class">An Interval Class</a></h2>
+<p>Before we continue, we'll implement an interval class to manage real-valued intervals with a minimum and a maximum. We'll end up using this class quite often as we proceed.</p>
+<pre><code class="language-rust norun noplayground">#[derive(Debug, Clone, Copy)]
+pub struct Interval {
+    pub min: f64,
+    pub max: f64,
+}
+
+impl Default for Interval {
+    fn default() -&gt; Self {
+        Self::EMPTY
+    }
+}
+
+impl Interval {
+    pub const EMPTY: Self = Self {
+        min: f64::INFINITY,
+        max: f64::NEG_INFINITY,
+    };
+
+    pub const UNIVERSE: Self = Self {
+        min: f64::NEG_INFINITY,
+        max: f64::INFINITY,
+    };
+
+    pub fn new(min: f64, max: f64) -&gt; Self {
+        Self { min, max }
+    }
+
+    pub fn size(&amp;self) -&gt; f64 {
+        self.max - self.min
+    }
+
+    pub fn contains(&amp;self, x: f64) -&gt; bool {
+        self.min &lt;= x &amp;&amp; x &lt;= self.max
+    }
+
+    pub fn surrounds(&amp;self, x: f64) -&gt; bool {
+        self.min &lt; x &amp;&amp; x &lt; self.max
+    }
+}</code></pre>
+<p><strong>Listing 31:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">interval.rs</a>] <em>Introducing the new interval class</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/prelude.rs b/src/prelude.rs
+</span><span class="boring">index fcd4621..2ec9487 100644
+</span><span class="boring">--- a/src/prelude.rs
+</span><span class="boring">+++ b/src/prelude.rs
+</span><span class="boring">@@ -1,14 +1,14 @@
+</span><span class="boring"> pub use log::*;
+</span><span class="boring"> 
+</span><span class="boring"> // Rust Std usings
+</span><span class="boring"> 
+</span><span class="boring"> pub use std::rc::Rc;
+</span><span class="boring"> 
+</span><span class="boring"> // Constants
+</span><span class="boring"> 
+</span><span class="boring"> pub const INFINITY: f64 = f64::INFINITY;
+</span><span class="boring"> pub const PI: f64 = std::f64::consts::PI;
+</span><span class="boring"> 
+</span> // Common Headers
+ 
+<span class="boring">-pub use crate::{color::*, ray::*, vec3::*};
+</span>+pub use crate::{color::*, interval::Interval, ray::*, vec3::*};</code></pre>
+<p><strong>Listing 32:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">prelude.rs</a>] <em>Including the new interval class</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
+</span><span class="boring">index a7aab5a..1b65b92 100644
+</span><span class="boring">--- a/src/hittable.rs
+</span><span class="boring">+++ b/src/hittable.rs
+</span><span class="boring">@@ -1,27 +1,27 @@
+</span><span class="boring"> use crate::prelude::*;
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct HitRecord {
+</span><span class="boring">     pub p: Point3,
+</span><span class="boring">     pub normal: Vec3,
+</span><span class="boring">     pub t: f64,
+</span><span class="boring">     pub front_face: bool,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl HitRecord {
+</span><span class="boring">     pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">         // Sets the hit record normal vector.
+</span><span class="boring">         // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring"> 
+</span><span class="boring">         self.front_face = dot(r.direction(), outward_normal) &lt; 0.0;
+</span><span class="boring">         self.normal = if self.front_face {
+</span><span class="boring">             outward_normal
+</span><span class="boring">         } else {
+</span><span class="boring">             -outward_normal
+</span><span class="boring">         };
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> pub trait Hittable {
+<span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt;;
+ }</code></pre>
+<p><strong>Listing 33:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>hittable::hit() using interval</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
+</span><span class="boring">index 7841161..4647aa5 100644
+</span><span class="boring">--- a/src/hittable_list.rs
+</span><span class="boring">+++ b/src/hittable_list.rs
+</span><span class="boring">@@ -1,32 +1,32 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">     prelude::*,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Default)]
+</span><span class="boring"> pub struct HittableList {
+</span><span class="boring">     pub objects: Vec&lt;Rc&lt;dyn Hittable&gt;&gt;,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl HittableList {
+</span><span class="boring">     pub fn new() -&gt; Self {
+</span><span class="boring">         Self::default()
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn clear(&amp;mut self) {
+</span><span class="boring">         self.objects.clear();
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn add(&amp;mut self, object: Rc&lt;dyn Hittable&gt;) {
+</span><span class="boring">         self.objects.push(object);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Hittable for HittableList {
+<span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+</span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt; {
+         self.objects
+             .iter()
+<span class="boring">-            .filter_map(|obj| obj.hit(r, ray_tmin, ray_tmax))
+</span>+            .filter_map(|obj| obj.hit(r, ray_t))
+             .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
+     }
+ }</code></pre>
+<p><strong>Listing 34:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable_list.rs</a>] <em>hittable_list::hit() using interval</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
+</span><span class="boring">index 9de9f72..a2710b4 100644
+</span><span class="boring">--- a/src/sphere.rs
+</span><span class="boring">+++ b/src/sphere.rs
+</span><span class="boring">@@ -1,56 +1,56 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">     prelude::*,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Clone, Copy)]
+</span><span class="boring"> pub struct Sphere {
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     radius: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sphere {
+</span><span class="boring">     pub fn new(center: Point3, radius: f64) -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             center,
+</span><span class="boring">             radius: f64::max(0.0, radius),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Hittable for Sphere {
+<span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+</span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt; {
+<span class="boring">         let oc = self.center - r.origin();
+</span><span class="boring">         let a = r.direction().length_squared();
+</span><span class="boring">         let h = dot(r.direction(), oc);
+</span><span class="boring">         let c = oc.length_squared() - self.radius * self.radius;
+</span><span class="boring"> 
+</span><span class="boring">         let discriminant = h * h - a * c;
+</span><span class="boring">         if discriminant &lt; 0.0 {
+</span><span class="boring">             return None;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let sqrtd = f64::sqrt(discriminant);
+</span> 
+         // Find the nearest root that lies in the acceptable range.
+         let mut root = (h - sqrtd) / a;
+<span class="boring">-        if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span>+        if !ray_t.surrounds(root) {
+             root = (h + sqrtd) / a;
+<span class="boring">-            if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span>+            if !ray_t.surrounds(root) {
+                 return None;
+             }
+         }
+ 
+<span class="boring">         let t = root;
+</span><span class="boring">         let p = r.at(t);
+</span><span class="boring">         let mut rec = HitRecord {
+</span><span class="boring">             t,
+</span><span class="boring">             p,
+</span><span class="boring">             ..Default::default()
+</span><span class="boring">         };
+</span><span class="boring">         let outward_normal = (p - self.center) / self.radius;
+</span><span class="boring">         rec.set_face_normal(r, outward_normal);
+</span><span class="boring"> 
+</span><span class="boring">         Some(rec)
+</span>     }
+ }</code></pre>
+<p><strong>Listing 35:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>sphere using interval</em></p>
+<br>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 59c000b..a8d3932 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,74 +1,74 @@
+</span><span class="boring"> use code::{hittable::Hittable, hittable_list::HittableList, prelude::*, sphere::Sphere};
+</span><span class="boring"> 
+</span> fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">-    if let Some(rec) = world.hit(r, 0.0, INFINITY) {
+</span>+    if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+         return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+     }
+ 
+     let unit_direction = unit_vector(r.direction());
+     let a = 0.5 * (unit_direction.y() + 1.0);
+     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+ }
+<span class="boring"> 
+</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">     // Image
+</span><span class="boring"> 
+</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // World
+</span><span class="boring"> 
+</span><span class="boring">     let mut world = HittableList::new();
+</span><span class="boring"> 
+</span><span class="boring">     world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+</span><span class="boring">     world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+</span><span class="boring"> 
+</span><span class="boring">     // Camera
+</span><span class="boring"> 
+</span><span class="boring">     let focal_length = 1.0;
+</span><span class="boring">     let viewport_height = 2.0;
+</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the location of the upper left pixel.
+</span><span class="boring">     let viewport_upper_left =
+</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring">     println!("P3");
+</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">     println!("255");
+</span><span class="boring"> 
+</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">         info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         for i in 0..IMAGE_WIDTH {
+</span><span class="boring">             let pixel_center =
+</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">             let ray_direction = pixel_center - camera_center;
+</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring"> 
+</span><span class="boring">             let pixel_color = ray_color(r, &amp;world);
+</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring">     info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">     Ok(())
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 36:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>The new main using interval</em></p>
+<br>
 
                     </main>
 
@@ -1016,6 +2257,22 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 
         </div>
 
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
 
 
 

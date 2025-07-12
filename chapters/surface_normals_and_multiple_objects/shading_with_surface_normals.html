@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>The PPM Image Format - Ray Tracing in One Weekend (Rust)</title>
+        <title>Shading with Surface Normals - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,60 +168,123 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="the-ppm-image-format"><a class="header" href="#the-ppm-image-format">The PPM Image Format</a></h2>
-<p>Whenever you start a renderer, you need a way to see an image. The most straightforward way is to write it to a file. The catch is, there are so many formats. Many of those are complex. I always start with a plain text ppm file. Here’s a nice description from Wikipedia:</p>
-<p><img src="../../imgs/fig-1.01-ppm.jpg" alt="PPM Example" />
-<strong>Figure 1:</strong> <em>PPM Example</em></p>
-<p>Let’s make some C++ code to output such a thing:<sup class="footnote-reference" id="fr-21a-1"><a href="#footnote-21a">1</a></sup></p>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    // Image
+                        <h2 id="shading-with-surface-normals"><a class="header" href="#shading-with-surface-normals">Shading with Surface Normals</a></h2>
+<p>First, let’s get ourselves a surface normal so we can shade. This is a vector that is perpendicular to the surface at the point of intersection.</p>
+<p>We have a key design decision to make for normal vectors in our code: whether normal vectors will have an arbitrary length, or will be normalized to unit length.</p>
+<p>It is tempting to skip the expensive square root operation involved in normalizing the vector, in case it's not needed. In practice, however, there are three important observations. First, if a unit-length normal vector is <em>ever</em> required, then you might as well do it up front once, instead of over and over again “just in case” for every location where unit-length is required. Second, we <em>do</em> require unit-length normal vectors in several places. Third, if you require normal vectors to be unit length, then you can often efficiently generate that vector with an understanding of the specific geometry class, in its constructor, or in the <code>hit()</code> function. For example, sphere normals can be made unit length simply by dividing by the sphere radius, avoiding the square root entirely.</p>
+<p>Given all of this, we will adopt the policy that all normal vectors will be of unit length.</p>
+<p>For a sphere, the outward normal is in the direction of the hit point minus the center:</p>
+<p><img src="../../imgs/fig-1.06-sphere-normal.jpg" alt="Sphere surface-normal geometry" /></p>
+<p><strong>Figure 6:</strong> <em>Sphere surface-normal geometry</em></p>
+<br>
+<p>On the earth, this means that the vector from the earth’s center to you points straight up. Let’s throw that into the code now, and shade it. We don’t have any lights or anything yet, so let’s just visualize the normals with a color map. A common trick used for visualizing normals (because it’s easy and somewhat intuitive to assume \( \mathbf{n} \) is a unit length vector — so each component is between \( −1 \) and \( 1 \)) is to map each component to the interval from \( 0 \) to \( 1 \), and then map \( (x, y, z) \) to \( (red, green, blue) \). For the normal, we need the hit point, not just whether we hit or not (which is all we're calculating at the moment). We only have one sphere in the scene, and it's directly in front of the camera, so we won't worry about negative values of \( t \) yet. We'll just assume the closest hit point (smallest \( t \)) is the one that we want. These changes in the code let us compute and visualize \( \mathbf{n} \):</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index e3d9091..405ca4b 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,81 +1,82 @@
+</span> use code::{
+     color::{Color, write_color},
+     ray::Ray,
+     vec3::{Point3, Vec3, dot, unit_vector},
+ };
+ 
+<span class="boring">-fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
+</span>+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; Option&lt;f64&gt; {
+     let oc = center - r.origin();
+     let a = dot(r.direction(), r.direction());
+     let b = -2.0 * dot(r.direction(), oc);
+     let c = dot(oc, oc) - radius * radius;
+     let discriminant = b * b - 4.0 * a * c;
+ 
+<span class="boring">-    discriminant &gt;= 0.0
+</span>+    (discriminant &gt;= 0.0).then(|| (-b - f64::sqrt(discriminant)) / (2.0 * a))
+ }
+ 
+ fn ray_color(r: Ray) -&gt; Color {
+<span class="boring">-    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+</span><span class="boring">-        return Color::new(1.0, 0.0, 0.0);
+</span>+    if let Some(t) = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
++        let n = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
++        return 0.5 * Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+     }
+ 
+     let unit_direction = unit_vector(r.direction());
+     let a = 0.5 * (unit_direction.y() + 1.0);
+     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+ }
+ 
+ fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+     // Image
+ 
+     const ASPECT_RATIO: f64 = 16.0 / 9.0;
+<span class="boring">     const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     // Camera
+</span><span class="boring"> 
+</span><span class="boring">     let focal_length = 1.0;
+</span><span class="boring">     let viewport_height = 2.0;
+</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring"> 
+</span><span class="boring">     // Calculate the location of the upper left pixel.
+</span><span class="boring">     let viewport_upper_left =
+</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">     // Render
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring">     println!("P3");
+</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">     println!("255");
+</span><span class="boring"> 
+</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">         for i in 0..IMAGE_WIDTH {
+</span><span class="boring">             let pixel_center =
+</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">             let ray_direction = pixel_center - camera_center;
+</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring"> 
+</span><span class="boring">             let pixel_color = ray_color(r);
+</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">     Ok(())
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 12:</strong> [<a href="TODO">main.rs</a>] <em>Rendering surface normals on a sphere</em></p>
+<br>
+<p>And that yields this picture:</p>
+<img style="width: 100%" src="../../imgs/img-1.04-normals-sphere.png" alt="A sphere colored according to its normal vectors">
+<p><strong>Image 4:</strong> A sphere colored according to its normal vectors</p>
+<br>
 
-    const IMAGE_WIDTH: u32 = 256;
-    const IMAGE_HEIGHT: u32 = 256;
-
-    // Render
-
-    println!("P3");
-    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-    println!("255");
-
-    for j in 0..IMAGE_HEIGHT {
-        for i in 0..IMAGE_WIDTH {
-            let r = i as f64 / (IMAGE_WIDTH - 1) as f64;
-            let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
-            let b = 0.0;
-
-            let ir = (255.999 * r) as i32;
-            let ig = (255.999 * g) as i32;
-            let ib = (255.999 * b) as i32;
-
-            println!("{ir} {ig} {ib}");
-        }
-    }
-}</code></pre></pre>
-<p><strong>Listing 1:</strong> [<a href="TODO">main.rs</a>] <em>Creating your first image</em></p>
-<p>There are some things to note in this code:</p>
-<ol>
-<li>The pixels are written out in rows.</li>
-<li>Every row of pixels is written out left to right.</li>
-<li>These rows are written out from top to bottom.</li>
-<li>By convention, each of the red/green/blue components are represented internally by real-valued variables that range from 0.0 to 1.0. These must be scaled to integer values between 0 and 255 before we print them out.</li>
-<li>Red goes from fully off (black) to fully on (bright red) from left to right, and green goes from fully off at the top (black) to fully on at the bottom (bright green). Adding red and green light together make yellow so we should expect the bottom right corner to be yellow.</li>
-</ol>
-<hr>
-<ol class="footnote-definition"><li id="footnote-21a">
-<p>It is Rust code of course. This won't be annotated anymore. <a href="#fr-21a-1">↩</a></p>
-</li>
-</ol>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/overview.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/adding_a_sphere/creating_our_first_raytraced_image.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/output_an_image/creating_an_image_file.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/simplifying_the_ray_sphere_intersection_code.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -231,11 +294,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/overview.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/adding_a_sphere/creating_our_first_raytraced_image.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/output_an_image/creating_an_image_file.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/simplifying_the_ray_sphere_intersection_code.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

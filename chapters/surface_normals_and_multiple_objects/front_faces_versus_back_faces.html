@@ -1,0 +1,433 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Front Faces Versus Back Faces - Ray Tracing in One Weekend (Rust)</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="front-faces-versus-back-faces"><a class="header" href="#front-faces-versus-back-faces">Front Faces Versus Back Faces</a></h2>
+<p>The second design decision for normals is whether they should always point out. At present, the normal found will always be in the direction of the center to the intersection point (the normal points out). If the ray intersects the sphere from the outside, the normal points against the ray. If the ray intersects the sphere from the inside, the normal (which always points out) points with the ray. Alternatively, we can have the normal always point against the ray. If the ray is outside the sphere, the normal will point outward, but if the ray is inside the sphere, the normal will point inward.</p>
+<p><img src="../../imgs/fig-1.07-normal-sides.jpg" alt="Possible directions for sphere surface-normal geometry" /></p>
+<p><strong>Figure 7:</strong> <em>Possible directions for sphere surface-normal geometry</em></p>
+<br>
+<p>We need to choose one of these possibilities because we will eventually want to determine which side of the surface that the ray is coming from. This is important for objects that are rendered differently on each side, like the text on a two-sided sheet of paper, or for objects that have an inside and an outside, like glass balls.</p>
+<p>If we decide to have the normals always point out, then we will need to determine which side the ray is on when we color it. We can figure this out by comparing the ray with the normal. If the ray and the normal face in the same direction, the ray is inside the object, if the ray and the normal face in the opposite direction, then the ray is outside the object. This can be determined by taking the dot product of the two vectors, where if their dot is positive, the ray is inside the sphere.</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{
+</span><span class="boring">    ray::Ray,
+</span><span class="boring">    vec3::{Point3, Vec3, dot},
+</span><span class="boring">};
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct HitRecord {
+</span><span class="boring">    pub p: Point3,
+</span><span class="boring">    pub normal: Vec3,
+</span><span class="boring">    pub t: f64,
+</span><span class="boring">    pub front_face: bool,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl HitRecord {
+</span><span class="boring">    pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">        // Sets the hit record normal vector.
+</span><span class="boring">        // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring">
+</span><span class="boring">        let normal;
+</span><span class="boring">        let front_face;
+</span>        if dot(r.direction(), outward_normal) &gt; 0.0 {
+            // ray is inside the sphere
+<span class="boring">            normal = -outward_normal;
+</span><span class="boring">            front_face = false;
+</span>        } else {
+            // ray is outside the sphere
+<span class="boring">            normal = outward_normal;
+</span><span class="boring">            front_face = true;
+</span>        }
+<span class="boring">
+</span><span class="boring">        self.front_face = front_face;
+</span><span class="boring">        self.normal = normal;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">pub trait Hittable {
+</span><span class="boring">    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 17:</strong> <em>Comparing the ray and the normal</em></p>
+<br>
+<p>If we decide to have the normals always point against the ray, we won't be able to use the dot product to determine which side of the surface the ray is on. Instead, we would need to store that information:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{
+</span><span class="boring">    ray::Ray,
+</span><span class="boring">    vec3::{Point3, Vec3, dot},
+</span><span class="boring">};
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct HitRecord {
+</span><span class="boring">    pub p: Point3,
+</span><span class="boring">    pub normal: Vec3,
+</span><span class="boring">    pub t: f64,
+</span><span class="boring">    pub front_face: bool,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl HitRecord {
+</span><span class="boring">    pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">        // Sets the hit record normal vector.
+</span><span class="boring">        // NOTE: the parameter `outward_normal` is assumed to have unit length.
+</span><span class="boring">
+</span><span class="boring">        let normal;
+</span>        let front_face;
+        if dot(r.direction(), outward_normal) &gt; 0.0 {
+            // ray is inside the sphere
+            normal = -outward_normal;
+            front_face = false;
+        } else {
+            // ray is outside the sphere
+            normal = outward_normal;
+            front_face = true;
+        }
+<span class="boring">
+</span><span class="boring">        self.front_face = front_face;
+</span><span class="boring">        self.normal = normal;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">pub trait Hittable {
+</span><span class="boring">    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 18:</strong> <em>Remembering the side of the surface</em></p>
+<br>
+<p>We can set things up so that normals always point “outward” from the surface, or always point against the incident ray. This decision is determined by whether you want to determine the side of the surface at the time of geometry intersection or at the time of coloring. In this book we have more material types than we have geometry types, so we'll go for less work and put the determination at geometry time. This is simply a matter of preference, and you'll see both implementations in the literature.</p>
+<p>We add the <code>front_face</code> bool to the <code>hit_record</code> class. We'll also add a function to solve this calculation for us: <code>set_face_normal()</code>. For convenience we will assume that the vector passed to the new <code>set_face_normal()</code> function is of unit length. We could always normalize the parameter explicitly, but it's more efficient if the geometry code does this, as it's usually easier when you know more about the specific geometry.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
+</span><span class="boring">index b8a3fcf..8ced826 100644
+</span><span class="boring">--- a/src/hittable.rs
+</span><span class="boring">+++ b/src/hittable.rs
+</span><span class="boring">@@ -1,15 +1,30 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     ray::Ray,
+</span><span class="boring">-    vec3::{Point3, Vec3},
+</span><span class="boring">+    vec3::{Point3, Vec3, dot},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span> #[derive(Debug, Default, Clone, Copy)]
+ pub struct HitRecord {
+     pub p: Point3,
+     pub normal: Vec3,
+     pub t: f64,
++    pub front_face: bool,
++}
++
++impl HitRecord {
++    pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
++        // Sets the hit record normal vector.
++        // NOTE: the parameter `outward_normal` is assumed to have unit length.
++
++        self.front_face = dot(r.direction(), outward_normal) &lt; 0.0;
++        self.normal = if self.front_face {
++            outward_normal
++        } else {
++            -outward_normal
++        };
++    }
+ }
+<span class="boring"> 
+</span><span class="boring"> pub trait Hittable {
+</span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 19:</strong> [<a href="TODO">hittable.rs</a>] <em>Adding front-face tracking to hit_record</em></p>
+<br>
+<p>And then we add the surface side determination to the class:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
+</span><span class="boring">index aa651e9..86d3cbb 100644
+</span><span class="boring">--- a/src/sphere.rs
+</span><span class="boring">+++ b/src/sphere.rs
+</span><span class="boring">@@ -1,56 +1,57 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">     ray::Ray,
+</span><span class="boring">     vec3::{Point3, dot},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Clone, Copy)]
+</span><span class="boring"> pub struct Sphere {
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     radius: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sphere {
+</span><span class="boring">     pub fn new(center: Point3, radius: f64) -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             center,
+</span><span class="boring">             radius: f64::max(0.0, radius),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Hittable for Sphere {
+     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+<span class="boring">         let oc = self.center - r.origin();
+</span><span class="boring">         let a = r.direction().length_squared();
+</span><span class="boring">         let h = dot(r.direction(), oc);
+</span><span class="boring">         let c = oc.length_squared() - self.radius * self.radius;
+</span><span class="boring"> 
+</span><span class="boring">         let discriminant = h * h - a * c;
+</span><span class="boring">         if discriminant &lt; 0.0 {
+</span><span class="boring">             return None;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let sqrtd = f64::sqrt(discriminant);
+</span><span class="boring"> 
+</span><span class="boring">         // Find the nearest root that lies in the acceptable range.
+</span><span class="boring">         let mut root = (h - sqrtd) / a;
+</span><span class="boring">         if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span><span class="boring">             root = (h + sqrtd) / a;
+</span><span class="boring">             if root &lt;= ray_tmin || ray_tmax &lt;= root {
+</span><span class="boring">                 return None;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span> 
+         let t = root;
+         let p = r.at(t);
+<span class="boring">-        let rec = HitRecord {
+</span>+        let mut rec = HitRecord {
+             t,
+             p,
+<span class="boring">-            normal: (p - self.center) / self.radius,
+</span>             ..Default::default()
+         };
++        let outward_normal = (p - self.center) / self.radius;
++        rec.set_face_normal(r, outward_normal);
+ 
+         Some(rec)
+     }
+ }</code></pre>
+<p><strong>Listing 20:</strong> [<a href="TODO">sphere.rs</a>] <em>The sphere class with normal determination</em></p>
+<br>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../chapters/surface_normals_and_multiple_objects/an_abstraction_for_hittable_objects.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/a_list_of_hittable_objects.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../chapters/surface_normals_and_multiple_objects/an_abstraction_for_hittable_objects.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/a_list_of_hittable_objects.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

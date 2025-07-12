@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Disclaimer - Ray Tracing in One Weekend (Rust)</title>
+        <title>A List of Hittable Objects - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -12,21 +12,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -35,12 +35,12 @@
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="../../toc.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -104,7 +104,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -139,7 +139,7 @@
                     <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -168,15 +168,54 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="disclaimer"><a class="header" href="#disclaimer">Disclaimer</a></h1>
-<p>The content of the original <a href="https://raytracing.github.io">book series</a> is licensed under the <a href="https://github.com/RayTracing/raytracing.github.io/blob/release/COPYING.txt">CC0 license</a>, which permits copying, modification, and distribution. The explanations are copied directly and have been annotated with Rust-specific details where appropriate. Any sentences that include words such as <em>I</em>, <em>me</em>, or <em>mine</em> are from the original authors, Peter Shirley, Trevor David Black or Steve Hollasch. Once again, thank you for this outstanding book series.</p>
+                        <h2 id="a-list-of-hittable-objects"><a class="header" href="#a-list-of-hittable-objects">A List of Hittable Objects</a></h2>
+<p>We have a generic object called a <code>hittable</code> that the ray can intersect with. We now add a class that stores a list of <code>hittables</code>:</p>
+<pre><code class="language-rust norun noplayground">use std::rc::Rc;
+
+use crate::{
+    hittable::{HitRecord, Hittable},
+    ray::Ray,
+};
+
+#[derive(Default)]
+pub struct HittableList {
+    pub objects: Vec&lt;Rc&lt;dyn Hittable&gt;&gt;,
+}
+
+impl HittableList {
+    pub fn new() -&gt; Self {
+        Self::default()
+    }
+
+    pub fn clear(&amp;mut self) {
+        self.objects.clear();
+    }
+
+    pub fn add(&amp;mut self, object: Rc&lt;dyn Hittable&gt;) {
+        self.objects.push(object);
+    }
+}
+
+impl Hittable for HittableList {
+    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt; {
+        self.objects
+            .iter()
+            .filter_map(|obj| obj.hit(r, ray_tmin, ray_tmax))
+            .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
+    }
+}</code></pre>
+<p><strong>Listing 21:</strong> [<a href="TODO">hittable_list.rs</a>] <em>The hittable_list class</em></p>
+<br>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../chapters/surface_normals_and_multiple_objects/front_faces_versus_back_faces.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
-                            <a rel="next prefetch" href="chapters/cover.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/some_new_cpp_features.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -186,8 +225,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../chapters/surface_normals_and_multiple_objects/front_faces_versus_back_faces.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
-                    <a rel="next prefetch" href="chapters/cover.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/some_new_cpp_features.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -218,13 +260,13 @@
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
 
         <!-- Custom JS scripts -->
 
