@@ -1,0 +1,664 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Moving Camera Code Into Its Own Class - Ray Tracing in One Weekend (Rust)</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="moving-camera-code-into-its-own-class"><a class="header" href="#moving-camera-code-into-its-own-class">Moving Camera Code Into Its Own Class</a></h1>
+<p>Before continuing, now is a good time to consolidate our camera and scene-render code into a single new class: the <code>camera</code> class. The camera class will be responsible for two important jobs:</p>
+<ol>
+<li>Construct and dispatch rays into the world.</li>
+<li>Use the results of these rays to construct the rendered image.</li>
+</ol>
+<p>In this refactoring, we'll collect the <code>ray_color()</code> function, along with the image, camera, and render sections of our main program. The new camera class will contain two public methods <code>initialize()</code> and <code>render()</code>, plus two private helper methods <code>get_ray()</code> and <code>ray_color()</code>.</p>
+<p>Ultimately, the camera will follow the simplest usage pattern that we could think of: it will be default constructed no arguments, then the owning code will modify the camera's public variables through simple assignment, and finally everything is initialized by a call to the <code>initialize()</code> function. This pattern is chosen instead of the owner calling a constructor with a ton of parameters or by defining and calling a bunch of setter methods. Instead, the owning code only needs to set what it explicitly cares about. Finally, we could either have the owning code call <code>initialize()</code>, or just have the camera call this function automatically at the start of <code>render()</code>. We'll use the second approach. <sup class="footnote-reference" id="fr-7a-1"><a href="#footnote-7a">1</a></sup></p>
+<p>After main creates a camera and sets default values, it will call the <code>render()</code> method. The <code>render()</code> method will prepare the <code>camera</code> for rendering and then execute the render loop.</p>
+<p>Here's the skeleton of our new <code>camera</code> class:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring">
+</span><span class="boring">pub struct Camera {
+</span><span class="boring">    /// Ratio of image width over height
+</span><span class="boring">    pub aspect_ratio: f64,
+</span><span class="boring">    /// Rendered image width in pixel count
+</span><span class="boring">    pub image_width: i32,
+</span><span class="boring">
+</span><span class="boring">    /// Rendered image height
+</span><span class="boring">    image_height: i32,
+</span><span class="boring">    /// Camera center
+</span><span class="boring">    center: Point3,
+</span><span class="boring">    /// Location of pixel 0, 0
+</span><span class="boring">    pixel00_loc: Point3,
+</span><span class="boring">    /// Offset to pixel to the right
+</span><span class="boring">    pixel_delta_u: Vec3,
+</span><span class="boring">    /// Offset to pixel below
+</span><span class="boring">    pixel_delta_v: Vec3,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Default for Camera {
+</span><span class="boring">    fn default() -&gt; Self {
+</span><span class="boring">        Self {
+</span><span class="boring">            aspect_ratio: 1.0,
+</span><span class="boring">            image_width: 100,
+</span><span class="boring">            image_height: Default::default(),
+</span><span class="boring">            center: Default::default(),
+</span><span class="boring">            pixel00_loc: Default::default(),
+</span><span class="boring">            pixel_delta_u: Default::default(),
+</span><span class="boring">            pixel_delta_v: Default::default(),
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span>impl Camera {
+    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+<span class="boring">        self.aspect_ratio = aspect_ratio;
+</span>
+<span class="boring">        self
+</span>    }
+
+    pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+<span class="boring">        self.image_width = image_width;
+</span>
+<span class="boring">        self
+</span>    }
+
+    pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+<span class="boring">        self.initialize();
+</span>
+<span class="boring">        println!("P3");
+</span><span class="boring">        println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">        println!("255");
+</span><span class="boring">
+</span><span class="boring">        for j in 0..self.image_height {
+</span><span class="boring">            info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">            for i in 0..self.image_width {
+</span><span class="boring">                let pixel_center = self.pixel00_loc
+</span><span class="boring">                    + (i as f64) * self.pixel_delta_u
+</span><span class="boring">                    + (j as f64) * self.pixel_delta_v;
+</span><span class="boring">                let ray_direction = pixel_center - self.center;
+</span><span class="boring">                let r = Ray::new(self.center, ray_direction);
+</span><span class="boring">
+</span><span class="boring">                let pixel_color = Self::ray_color(r, world);
+</span><span class="boring">                write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">            }
+</span><span class="boring">        }
+</span><span class="boring">        info!("Done.");
+</span><span class="boring">
+</span><span class="boring">        Ok(())
+</span>    }
+
+    fn initialize(&amp;mut self) {
+<span class="boring">        self.image_height = {
+</span><span class="boring">            let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">            if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">        };
+</span>
+<span class="boring">        self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Determine viewport dimensions.
+</span><span class="boring">        let focal_length = 1.0;
+</span><span class="boring">        let viewport_height = 2.0;
+</span><span class="boring">        let viewport_width =
+</span><span class="boring">            viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">        self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">        self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring">
+</span><span class="boring">        // Calculate the location of the upper left pixel.
+</span><span class="boring">        let viewport_upper_left =
+</span><span class="boring">            self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span>    }
+
+    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">        if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">        }
+</span>
+<span class="boring">        let unit_direction = unit_vector(r.direction());
+</span><span class="boring">        let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>    }
+}</code></pre>
+<p><strong>Listing 37:</strong> [<a href="https://github.com/goldnor/code/blob/9b893f7953de35ce34fad2062845cb4d0202c21e/src/camera.rs">camera.rs</a>] <em>The camera class skeleton</em></p>
+<br>
+<p>To begin with, let's fill in the <code>ray_color()</code> function from <code>main.cc</code>:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring">
+</span><span class="boring">pub struct Camera {
+</span><span class="boring">    /// Ratio of image width over height
+</span><span class="boring">    pub aspect_ratio: f64,
+</span><span class="boring">    /// Rendered image width in pixel count
+</span><span class="boring">    pub image_width: i32,
+</span><span class="boring">
+</span><span class="boring">    /// Rendered image height
+</span><span class="boring">    image_height: i32,
+</span><span class="boring">    /// Camera center
+</span><span class="boring">    center: Point3,
+</span><span class="boring">    /// Location of pixel 0, 0
+</span><span class="boring">    pixel00_loc: Point3,
+</span><span class="boring">    /// Offset to pixel to the right
+</span><span class="boring">    pixel_delta_u: Vec3,
+</span><span class="boring">    /// Offset to pixel below
+</span><span class="boring">    pixel_delta_v: Vec3,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Default for Camera {
+</span><span class="boring">    fn default() -&gt; Self {
+</span><span class="boring">        Self {
+</span><span class="boring">            aspect_ratio: 1.0,
+</span><span class="boring">            image_width: 100,
+</span><span class="boring">            image_height: Default::default(),
+</span><span class="boring">            center: Default::default(),
+</span><span class="boring">            pixel00_loc: Default::default(),
+</span><span class="boring">            pixel_delta_u: Default::default(),
+</span><span class="boring">            pixel_delta_v: Default::default(),
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span>impl Camera {
+<span class="boring">    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+</span><span class="boring">        self.aspect_ratio = aspect_ratio;
+</span><span class="boring">
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+</span><span class="boring">        self.image_width = image_width;
+</span><span class="boring">
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">        self.initialize();
+</span><span class="boring">
+</span><span class="boring">        println!("P3");
+</span><span class="boring">        println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">        println!("255");
+</span><span class="boring">
+</span><span class="boring">        for j in 0..self.image_height {
+</span><span class="boring">            info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">            for i in 0..self.image_width {
+</span><span class="boring">                let pixel_center = self.pixel00_loc
+</span><span class="boring">                    + (i as f64) * self.pixel_delta_u
+</span><span class="boring">                    + (j as f64) * self.pixel_delta_v;
+</span><span class="boring">                let ray_direction = pixel_center - self.center;
+</span><span class="boring">                let r = Ray::new(self.center, ray_direction);
+</span><span class="boring">
+</span><span class="boring">                let pixel_color = Self::ray_color(r, world);
+</span><span class="boring">                write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">            }
+</span><span class="boring">        }
+</span><span class="boring">        info!("Done.");
+</span><span class="boring">
+</span><span class="boring">        Ok(())
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn initialize(&amp;mut self) {
+</span><span class="boring">        self.image_height = {
+</span><span class="boring">            let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">            if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">        };
+</span><span class="boring">
+</span><span class="boring">        self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Determine viewport dimensions.
+</span><span class="boring">        let focal_length = 1.0;
+</span><span class="boring">        let viewport_height = 2.0;
+</span><span class="boring">        let viewport_width =
+</span><span class="boring">            viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">        self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">        self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring">
+</span><span class="boring">        // Calculate the location of the upper left pixel.
+</span><span class="boring">        let viewport_upper_left =
+</span><span class="boring">            self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span><span class="boring">    }
+</span><span class="boring">
+</span>    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+        if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+        }
+
+        let unit_direction = unit_vector(r.direction());
+        let a = 0.5 * (unit_direction.y() + 1.0);
+        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+    }
+}</code></pre>
+<p><strong>Listing 38:</strong> [<a href="https://github.com/goldnor/code/blob/9b893f7953de35ce34fad2062845cb4d0202c21e/src/camera.rs">camera.rs</a>] <em>The camera::ray_color function</em></p>
+<br>
+<p>Now we move almost everything from the <code>main()</code> function into our new camera class. The only thing remaining in the <code>main()</code> function is the world construction. Here's the camera class with newly migrated code:</p>
+<pre><code class="language-rust norun noplayground">use crate::{hittable::Hittable, prelude::*};
+
+pub struct Camera {
+    /// Ratio of image width over height
+    pub aspect_ratio: f64,
+    /// Rendered image width in pixel count
+    pub image_width: i32,
+
+    /// Rendered image height
+    image_height: i32,
+    /// Camera center
+    center: Point3,
+    /// Location of pixel 0, 0
+    pixel00_loc: Point3,
+    /// Offset to pixel to the right
+    pixel_delta_u: Vec3,
+    /// Offset to pixel below
+    pixel_delta_v: Vec3,
+}
+
+impl Default for Camera {
+    fn default() -&gt; Self {
+        Self {
+            aspect_ratio: 1.0,
+            image_width: 100,
+            image_height: Default::default(),
+            center: Default::default(),
+            pixel00_loc: Default::default(),
+            pixel_delta_u: Default::default(),
+            pixel_delta_v: Default::default(),
+        }
+    }
+}
+
+impl Camera {
+    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+        self.aspect_ratio = aspect_ratio;
+
+        self
+    }
+
+    pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+        self.image_width = image_width;
+
+        self
+    }
+
+    pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+        self.initialize();
+
+        println!("P3");
+        println!("{} {}", self.image_width, self.image_height);
+        println!("255");
+
+        for j in 0..self.image_height {
+            info!("Scanlines remaining: {}", self.image_height - j);
+            for i in 0..self.image_width {
+                let pixel_center = self.pixel00_loc
+                    + (i as f64) * self.pixel_delta_u
+                    + (j as f64) * self.pixel_delta_v;
+                let ray_direction = pixel_center - self.center;
+                let r = Ray::new(self.center, ray_direction);
+
+                let pixel_color = Self::ray_color(r, world);
+                write_color(std::io::stdout(), pixel_color)?;
+            }
+        }
+        info!("Done.");
+
+        Ok(())
+    }
+
+    fn initialize(&amp;mut self) {
+        self.image_height = {
+            let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+            if image_height &lt; 1 { 1 } else { image_height }
+        };
+
+        self.center = Point3::new(0.0, 0.0, 0.0);
+
+        // Determine viewport dimensions.
+        let focal_length = 1.0;
+        let viewport_height = 2.0;
+        let viewport_width =
+            viewport_height * (self.image_width as f64) / (self.image_height as f64);
+
+        // Calculate the vectors across the horizontal and down the vertical viewport edges.
+        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+
+        // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+        self.pixel_delta_u = viewport_u / self.image_width as f64;
+        self.pixel_delta_v = viewport_v / self.image_height as f64;
+
+        // Calculate the location of the upper left pixel.
+        let viewport_upper_left =
+            self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+    }
+
+    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">        if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">        }
+</span>
+<span class="boring">        let unit_direction = unit_vector(r.direction());
+</span><span class="boring">        let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>    }
+}</code></pre>
+<p><strong>Listing 39:</strong> [<a href="https://github.com/goldnor/code/blob/9b893f7953de35ce34fad2062845cb4d0202c21e/src/camera.rs">camera.rs</a>] <em>The working camera class</em></p>
+<br>
+<p>And here's the much reduced main:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index a8d3932..27377f1 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,74 +1,15 @@
+</span><span class="boring">-use code::{hittable::Hittable, hittable_list::HittableList, prelude::*, sphere::Sphere};
+</span><span class="boring">-
+</span>-fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">-    if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">-        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">-    }
+</span>-
+<span class="boring">-    let unit_direction = unit_vector(r.direction());
+</span><span class="boring">-    let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">-    (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>-}
+-
+<span class="boring">-fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">-    // Image
+</span><span class="boring">-
+</span><span class="boring">-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">-    const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">-    const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">-        let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">-        if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">-    };
+</span><span class="boring">-
+</span><span class="boring">-    // World
+</span>+use code::{camera::Camera, hittable_list::HittableList, prelude::*, sphere::Sphere};
+ 
++fn main() -&gt; std::io::Result&lt;()&gt; {
+     let mut world = HittableList::new();
+ 
+     world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+     world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+ 
+<span class="boring">-    // Camera
+</span><span class="boring">-
+</span><span class="boring">-    let focal_length = 1.0;
+</span><span class="boring">-    let viewport_height = 2.0;
+</span><span class="boring">-    let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">-    let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">-    let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">-    let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">-    let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">-    let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the location of the upper left pixel.
+</span><span class="boring">-    let viewport_upper_left =
+</span><span class="boring">-        camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">-    let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring">-
+</span><span class="boring">-    // Render
+</span><span class="boring">-
+</span>     env_logger::init();
+<span class="boring">-    println!("P3");
+</span><span class="boring">-    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">-    println!("255");
+</span><span class="boring">-
+</span><span class="boring">-    for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">-        info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">-        for i in 0..IMAGE_WIDTH {
+</span><span class="boring">-            let pixel_center =
+</span><span class="boring">-                pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">-            let ray_direction = pixel_center - camera_center;
+</span><span class="boring">-            let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring">-
+</span><span class="boring">-            let pixel_color = ray_color(r, &amp;world);
+</span><span class="boring">-            write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">-        }
+</span><span class="boring">-    }
+</span><span class="boring">-    info!("Done.");
+</span> 
+<span class="boring">-    Ok(())
+</span>+    Camera::default()
++        .with_aspect_ratio(16.0 / 9.0)
++        .with_image_width(400)
++        .render(&amp;world)
+ }
+</code></pre>
+<p><strong>Listing 40:</strong> [<a href="https://github.com/goldnor/code/blob/1ffb3c6125e9e07efe10f448e9f1adc0b5800a1d/src/main.rs">main.rs</a>] <em>The new main, using the new camera</em></p>
+<br>
+<p>Running this newly refactored program should give us the same rendered image as before.</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-7a">
+<p>The idiomatic Rust solution for this type of problem is the builder pattern. Important parameters can be set either directly with struct access or via a convenient method chain in the owning code. <a href="#fr-7a-1">↩</a></p>
+</li>
+</ol>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../chapters/surface_normals_and_multiple_objects/an_interval_class.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../chapters/antialiasing/antialiasing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../chapters/surface_normals_and_multiple_objects/an_interval_class.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../chapters/antialiasing/antialiasing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

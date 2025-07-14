@@ -209,7 +209,7 @@ impl Interval {
         self.min &lt; x &amp;&amp; x &lt; self.max
     }
 }</code></pre>
-<p><strong>Listing 31:</strong> [<a href="TODO">interval.rs</a>] <em>Introducing the new interval class</em></p>
+<p><strong>Listing 31:</strong> [<a href="https://github.com/goldnor/code/blob/b97cce927b5c04bc925b77462cef0a4ce6152d4a/src/interval.rs">interval.rs</a>] <em>Introducing the new interval class</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/prelude.rs b/src/prelude.rs
 </span><span class="boring">index fcd4621..2ec9487 100644
@@ -231,7 +231,7 @@ impl Interval {
  
 <span class="boring">-pub use crate::{color::*, ray::*, vec3::*};
 </span>+pub use crate::{color::*, interval::Interval, ray::*, vec3::*};</code></pre>
-<p><strong>Listing 32:</strong> [<a href="TODO">prelude.rs</a>] <em>Including the new interval class</em></p>
+<p><strong>Listing 32:</strong> [<a href="https://github.com/goldnor/code/blob/7fc2aa1432889497ecb73854719905b0ed276a68/src/prelude.rs">prelude.rs</a>] <em>Including the new interval class</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
 </span><span class="boring">index a7aab5a..1b65b92 100644
@@ -266,7 +266,7 @@ impl Interval {
 <span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 </span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt;;
  }</code></pre>
-<p><strong>Listing 33:</strong> [<a href="TODO">hittable.rs</a>] <em>hittable::hit() using interval</em></p>
+<p><strong>Listing 33:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/hittable.rs">hittable.rs</a>] <em>hittable::hit() using interval</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
 </span><span class="boring">index 7841161..4647aa5 100644
@@ -307,7 +307,7 @@ impl Interval {
              .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
      }
  }</code></pre>
-<p><strong>Listing 34:</strong> [<a href="TODO">hittable_list.rs</a>] <em>hittable_list::hit() using interval</em></p>
+<p><strong>Listing 34:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/hittable_list.rs">hittable_list.rs</a>] <em>hittable_list::hit() using interval</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
 </span><span class="boring">index 9de9f72..a2710b4 100644
@@ -373,7 +373,7 @@ impl Interval {
 </span><span class="boring">         Some(rec)
 </span>     }
  }</code></pre>
-<p><strong>Listing 35:</strong> [<a href="TODO">sphere.rs</a>] <em>sphere using interval</em></p>
+<p><strong>Listing 35:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/sphere.rs">sphere.rs</a>] <em>sphere using interval</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
 </span><span class="boring">index 59c000b..a8d3932 100644
@@ -455,7 +455,7 @@ impl Interval {
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 36:</strong> [<a href="TODO">main.rs</a>] <em>The new main using interval</em></p>
+<p><strong>Listing 36:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/main.rs">main.rs</a>] <em>The new main using interval</em></p>
 <br>
 
                     </main>
@@ -466,6 +466,9 @@ impl Interval {
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
+                            <a rel="next prefetch" href="../../chapters/moving_camera_code_into_its_own_class.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -477,6 +480,9 @@ impl Interval {
                         <i class="fa fa-angle-left"></i>
                     </a>
 
+                    <a rel="next prefetch" href="../../chapters/moving_camera_code_into_its_own_class.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>

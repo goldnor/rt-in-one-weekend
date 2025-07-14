@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Adding a Progress Indicator - Ray Tracing in One Weekend (Rust)</title>
+        <title>Antialiasing - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,60 +168,24 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="adding-a-progress-indicator"><a class="header" href="#adding-a-progress-indicator">Adding a Progress Indicator</a></h2>
-<p>Before we continue, let's add a progress indicator to our output. This is a handy way to track the progress of a long render, and also to possibly identify a run that's stalled out due to an infinite loop or other problem.</p>
-<p>Our program outputs the image to the standard output stream (<code>std::cout</code>), so leave that alone and instead write to the logging output stream (<code>std::clog</code>):<sup class="footnote-reference" id="fr-23a-1"><a href="#footnote-23a">1</a></sup></p>
-<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index af636bc..00cad27 100644
-</span><span class="boring">--- a/src/main.rs
-</span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,26 +1,29 @@
-</span><span class="boring"> fn main() {
-</span><span class="boring">     // Image
-</span><span class="boring"> 
-</span><span class="boring">     const IMAGE_WIDTH: u32 = 256;
-</span><span class="boring">     const IMAGE_HEIGHT: u32 = 256;
-</span><span class="boring"> 
-</span><span class="boring">     // Render
-</span><span class="boring"> 
-</span>+    env_logger::init();
-     println!("P3");
-     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-     println!("255");
- 
-     for j in 0..IMAGE_HEIGHT {
-+        log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
-         for i in 0..IMAGE_WIDTH {
-             let r = i as f64 / (IMAGE_WIDTH - 1) as f64;
-             let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
-             let b = 0.0;
- 
-             let ir = (255.999 * r) as i32;
-             let ig = (255.999 * g) as i32;
-             let ib = (255.999 * b) as i32;
- 
-             println!("{ir} {ig} {ib}");
-         }
-     }
-+    log::info!("Done.");
-<span class="boring"> }</span></code></pre>
-<p><strong>Listing 3:</strong> [<a href="https://github.com/goldnor/code/blob/5c4dfec5c8122b0a6df768027866c4a526da8677/src/main.rs">main.rs</a>] <em>Main render loop with progress reporting</em></p>
+                        <h1 id="antialiasing"><a class="header" href="#antialiasing">Antialiasing</a></h1>
+<p>If you zoom into the rendered images so far, you might notice the harsh “stair step” nature of edges in our rendered images. This stair-stepping is commonly referred to as “aliasing”, or “jaggies”. When a real camera takes a picture, there are usually no jaggies along edges, because the edge pixels are a blend of some foreground and some background. Consider that unlike our rendered images, a true image of the world is continuous. Put another way, the world (and any true image of it) has effectively infinite resolution. We can get the same effect by averaging a bunch of samples for each pixel.</p>
+<p>With a single ray through the center of each pixel, we are performing what is commonly called <em>point sampling</em>. The problem with point sampling can be illustrated by rendering a small checkerboard far away. If this checkerboard consists of an 8×8 grid of black and white tiles, but only four rays hit it, then all four rays might intersect only white tiles, or only black, or some odd combination. In the real world, when we perceive a checkerboard far away with our eyes, we perceive it as a gray color, instead of sharp points of black and white. That's because our eyes are naturally doing what we want our ray tracer to do: integrate the (continuous function of) light falling on a particular (discrete) region of our rendered image.</p>
+<p>Clearly we don't gain anything by just resampling the same ray through the pixel center multiple times — we'd just get the same result each time. Instead, we want to sample the light falling <em>around</em> the pixel, and then integrate those samples to approximate the true continuous result. So, how do we integrate the light falling around the pixel?</p>
+<p>We'll adopt the simplest model: sampling the square region centered at the pixel that extends halfway to each of the four neighboring pixels. This is not the optimal approach, but it is the most straight-forward. (See <a href="https://www.researchgate.net/publication/244986797_A_Pixel_Is_Not_A_Little_Square_A_Pixel_Is_Not_A_Little_Square_A_Pixel_Is_Not_A_Little_Square">A Pixel is Not a Little Square</a> for a deeper dive into this topic.)</p>
+<p><img src="../../imgs/fig-1.08-pixel-samples.jpg" alt="Pixel samples" /></p>
+<p><strong>Figure 8:</strong> <em>Pixel samples</em></p>
 <br>
-<p>Now when running, you'll see a running count of the number of scanlines remaining. Hopefully this runs so fast that you don't even see it! Don't worry — you'll have lots of time in the future to watch a slowly updating progress line as we expand our ray tracer.</p>
-<hr>
-<ol class="footnote-definition"><li id="footnote-23a">
-<p>The <a href="https://crates.io/crates/log">log crate</a> with the <a href="https://crates.io/crates/env_logger">env_logger</a> implementation is a good alternative to <code>std::clog</code>. Run <code>RUST_LOG=info cargo r &gt; image.ppm</code> for the log output. <a href="#fr-23a-1">↩</a></p>
-</li>
-</ol>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/output_an_image/creating_an_image_file.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/moving_camera_code_into_its_own_class.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/the_vec3_class/the_vec3_class.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/antialiasing/some_random_number_utilities.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -231,11 +195,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/output_an_image/creating_an_image_file.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/moving_camera_code_into_its_own_class.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/the_vec3_class/the_vec3_class.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/antialiasing/some_random_number_utilities.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

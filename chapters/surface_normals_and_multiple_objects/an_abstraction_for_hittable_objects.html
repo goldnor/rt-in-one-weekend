@@ -186,7 +186,7 @@ pub struct HitRecord {
 pub trait Hittable {
     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 }</code></pre>
-<p><strong>Listing 15:</strong> [<a href="TODO">hittable.rs</a>] <em>The hittable class</em></p>
+<p><strong>Listing 15:</strong> [<a href="https://github.com/goldnor/code/blob/1791ddbea0fdc81c13e4ef3daaaca7e440cec404/src/hittable.rs">hittable.rs</a>] <em>The hittable class</em></p>
 <br>
 <p>And here’s the sphere:</p>
 <pre><code class="language-rust norun noplayground">use crate::{
@@ -244,7 +244,7 @@ impl Hittable for Sphere {
         Some(rec)
     }
 }</code></pre>
-<p><strong>Listing 16:</strong> [<a href="TODO">sphere.rs</a>] <em>The sphere class</em></p>
+<p><strong>Listing 16:</strong> [<a href="https://github.com/goldnor/code/blob/36e5e545d452e57637150a4e1a8ba2ff93aee52b/src/sphere.rs">sphere.rs</a>] <em>The sphere class</em></p>
 <br>
 <p>(Note here that we use the C++ standard function <code>std::fmax()</code>, which returns the maximum of the two floating-point arguments. Similarly, we will later use <code>std::fmin()</code>, which returns the minimum of the two floating-point arguments.) <sup class="footnote-reference" id="fr-63b-1"><a href="#footnote-63b">2</a></sup></p>
 <hr>

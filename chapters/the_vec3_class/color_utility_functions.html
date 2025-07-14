@@ -185,7 +185,8 @@ pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::
 
     writeln!(out, "{rbyte} {gbyte} {bbyte}")
 }</code></pre>
-<p><strong>Listing 5:</strong> [<a href="TODO">color.rs</a>] <em>color utility functions</em></p>
+<p><strong>Listing 5:</strong> [<a href="https://github.com/goldnor/code/blob/6a4c63a317edcf4bb154fff3f817c561c2ed3aa9/src/color.rs">color.rs</a>] <em>color utility functions</em></p>
+<br>
 <p>Now we can change our main to use both of these:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
 </span><span class="boring">index 00cad27..bb37ee6 100644
@@ -232,7 +233,8 @@ pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::
 +
 +    Ok(())
  }</code></pre>
-<p><strong>Listing 6:</strong> [<a href="TODO">main.rs</a>] <em>Final code for the first PPM image</em></p>
+<p><strong>Listing 6:</strong> [<a href="https://github.com/goldnor/code/blob/7e3d601b91c93177f3b3d1ed98aa69d8ecf4ffee/src/main.rs">main.rs</a>)] <em>Final code for the first PPM image</em></p>
+<br>
 <p>And you should get the exact same picture as before.</p>
 
                     </main>

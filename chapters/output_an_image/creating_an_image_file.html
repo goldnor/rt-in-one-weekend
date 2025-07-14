@@ -186,10 +186,11 @@
 <p>On Mac or Linux, release build, you would launch the program like this:<sup class="footnote-reference" id="fr-22c-1"><a href="#footnote-22c">3</a></sup></p>
 <pre><code class="language-shell">cargo r &gt; image.ppm
 </code></pre>
-<p>Complete building and running instructions can be found in the <a href="TODO">project README</a>.</p>
+<p>Complete building and running instructions can be found in the <a href="https://github.com/goldnor/rt-books/blob/main/README.md">project README</a>.</p>
 <p>Opening the output file (in <code>ToyViewer</code> on my Mac, but try it in your favorite image viewer and Google “ppm viewer” if your viewer doesn’t support it) shows this result:</p>
 <img style="width: 100%" src="../../imgs/img-1.01-first-ppm-image.png" alt="First PPM image">
 <p><strong>Image 1:</strong> <em>First PPM image</em></p>
+<br>
 <p>Hooray! This is the graphics “hello world”. If your image doesn’t look like that, open the output file in a text editor and see what it looks like. It should start something like this:</p>
 <pre><code class="language-ppm">P3
 256 256
@@ -210,8 +211,9 @@
 ...
 </code></pre>
 <p><strong>Listing 2:</strong> <em>First image output</em></p>
+<br>
 <p>If your PPM file doesn't look like this, then double-check your formatting code. If it <em>does</em> look like this but fails to render, then you may have line-ending differences or something similar that is confusing your image viewer. To help debug this, you can find a file <code>test.ppm</code> in the <code>images</code> directory of the Github project. This should help to ensure that your viewer can handle the PPM format and to use as a comparison against your generated PPM file.</p>
-<p>Some readers have reported problems viewing their generated files on Windows. In this case, the problem is often that the PPM is written out as UTF-16, often from PowerShell. If you run into this problem, see <a href="TODO">Discussion 1114</a> for help with this issue.</p>
+<p>Some readers have reported problems viewing their generated files on Windows. In this case, the problem is often that the PPM is written out as UTF-16, often from PowerShell. If you run into this problem, see <a href="https://github.com/RayTracing/raytracing.github.io/discussions/1114">Discussion 1114</a> for help with this issue.</p>
 <p>If everything displays correctly, then you're pretty much done with system and IDE issues — everything in the remainder of this series uses this same simple mechanism for generated rendered images.</p>
 <p>If you want to produce other image formats, I am a fan of <code>stb_image.h</code>, a header-only image library available on GitHub at <a href="https://github.com/nothings/stb">https://github.com/nothings/stb</a>.<sup class="footnote-reference" id="fr-22d-1"><a href="#footnote-22d">4</a></sup></p>
 <hr>

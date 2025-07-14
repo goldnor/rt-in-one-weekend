@@ -177,7 +177,7 @@
 <p>When somebody says “ray tracing” it could mean many things. What I am going to describe is technically a path tracer, and a fairly general one. While the code will be pretty simple (let the computer do the work!) I think you’ll be very happy with the images you can make.</p>
 <p>I’ll take you through writing a ray tracer in the order I do it, along with some debugging tips. By the end, you will have a ray tracer that produces some great images. You should be able to do this in a weekend. If you take longer, don’t worry about it. I use C++ as the driving language, but you don’t need to.<sup class="footnote-reference" id="fr-1a-1"><a href="#footnote-1a">1</a></sup> However, I suggest you do, because it’s fast, portable, and most production movie and video game renderers are written in C++. Note that I avoid most “modern features” of C++, but inheritance and operator overloading are too useful for ray tracers to pass on.<sup class="footnote-reference" id="fr-1b-1"><a href="#footnote-1b">2</a></sup></p>
 <p>I do not provide the code online, but the code is real and I show all of it except for a few straightforward operators in the vec3 class. I am a big believer in typing in code to learn it, but when code is available I use it, so I only practice what I preach when the code is not available. So don’t ask!
-I have left that last part in because it is funny what a 180 I have done. Several readers ended up with subtle errors that were helped when we compared code. So please do type in the code, but you can find the finished source for each book in the <a href="chapters/TODO">RayTracing project on GitHub</a>.</p>
+I have left that last part in because it is funny what a 180 I have done. Several readers ended up with subtle errors that were helped when we compared code. So please do type in the code, but you can find the finished source for each book in the <a href="https://github.com/goldnor/rt-books">RayTracing project on GitHub</a>.</p>
 <p>A note on the implementing code for these books — our philosophy for the included code prioritizes the following goals:</p>
 <ul>
 <li>The code should implement the concepts covered in the books.</li>
@@ -187,8 +187,8 @@ I have left that last part in because it is funny what a 180 I have done. Severa
 </ul>
 <p>The code thus provides a baseline implementation, with tons of improvements left for the reader to enjoy. There are endless ways one can optimize and modernize the code; we prioritize the simple solution.</p>
 <p>We assume a little bit of familiarity with vectors (like dot product and vector addition). If you don’t know that, do a little review. If you need that review, or to learn it for the first time, check out the online <em><a href="https://graphicscodex.com/">Graphics Codex</a></em> by Morgan McGuire, <em>Fundamentals of Computer Graphics</em> by Steve Marschner and Peter Shirley, or <em>Computer Graphics: Principles and Practice</em> by J.D. Foley and Andy Van Dam.</p>
-<p>See the <a href="chapters/TODO">project README</a> file for information about this project, the repository on GitHub, directory structure, building &amp; running, and how to make or reference corrections and contributions.</p>
-<p>See our <a href="chapters/TODO">Further Reading wiki page</a> for additional project related resources.</p>
+<p>See the <a href="https://github.com/goldnor/rt-books/blob/main/README.md">project README</a> file for information about this project, the repository on GitHub, directory structure, building &amp; running, and how to make or reference corrections and contributions.</p>
+<p>See our <a href="https://github.com/RayTracing/raytracing.github.io/wiki/Further-Readings">Further Reading wiki page</a> for additional project related resources.</p>
 <p>These books have been formatted to print well directly from your browser. We also include PDFs of each book <a href="chapters/TODO">with each release</a>, in the “Assets” section.</p>
 <p>If you want to communicate with us, feel free to send us an email at:</p>
 <ul>
@@ -211,8 +211,9 @@ I have left that last part in because it is funny what a 180 I have done. Severa
 </li>
 </ol><div style="break-before: page; page-break-before: always;"></div><h2 id="the-ppm-image-format"><a class="header" href="#the-ppm-image-format">The PPM Image Format</a></h2>
 <p>Whenever you start a renderer, you need a way to see an image. The most straightforward way is to write it to a file. The catch is, there are so many formats. Many of those are complex. I always start with a plain text ppm file. Here’s a nice description from Wikipedia:</p>
-<p><img src="chapters/output_an_image/../../imgs/fig-1.01-ppm.jpg" alt="PPM Example" />
-<strong>Figure 1:</strong> <em>PPM Example</em></p>
+<p><img src="chapters/output_an_image/../../imgs/fig-1.01-ppm.jpg" alt="PPM Example" /></p>
+<p><strong>Figure 1:</strong> <em>PPM Example</em></p>
+<br>
 <p>Let’s make some C++ code to output such a thing:<sup class="footnote-reference" id="fr-21a-1"><a href="#footnote-21a">1</a></sup></p>
 <pre><pre class="playground"><code class="language-rust">fn main() {
     // Image
@@ -240,7 +241,8 @@ I have left that last part in because it is funny what a 180 I have done. Severa
         }
     }
 }</code></pre></pre>
-<p><strong>Listing 1:</strong> [<a href="chapters/output_an_image/TODO">main.rs</a>] <em>Creating your first image</em></p>
+<p><strong>Listing 1:</strong> [<a href="https://github.com/goldnor/code/blob/c2b88fe22dadf9cba6dff369ee0b1834dd9733d4/src/main.rs">main.rs</a>] <em>Creating your first image</em></p>
+<br>
 <p>There are some things to note in this code:</p>
 <ol>
 <li>The pixels are written out in rows.</li>
@@ -271,10 +273,11 @@ I have left that last part in because it is funny what a 180 I have done. Severa
 <p>On Mac or Linux, release build, you would launch the program like this:<sup class="footnote-reference" id="fr-22c-1"><a href="#footnote-22c">3</a></sup></p>
 <pre><code class="language-shell">cargo r &gt; image.ppm
 </code></pre>
-<p>Complete building and running instructions can be found in the <a href="chapters/output_an_image/TODO">project README</a>.</p>
+<p>Complete building and running instructions can be found in the <a href="https://github.com/goldnor/rt-books/blob/main/README.md">project README</a>.</p>
 <p>Opening the output file (in <code>ToyViewer</code> on my Mac, but try it in your favorite image viewer and Google “ppm viewer” if your viewer doesn’t support it) shows this result:</p>
 <img style="width: 100%" src="chapters/output_an_image/../../imgs/img-1.01-first-ppm-image.png" alt="First PPM image">
 <p><strong>Image 1:</strong> <em>First PPM image</em></p>
+<br>
 <p>Hooray! This is the graphics “hello world”. If your image doesn’t look like that, open the output file in a text editor and see what it looks like. It should start something like this:</p>
 <pre><code class="language-ppm">P3
 256 256
@@ -295,8 +298,9 @@ I have left that last part in because it is funny what a 180 I have done. Severa
 ...
 </code></pre>
 <p><strong>Listing 2:</strong> <em>First image output</em></p>
+<br>
 <p>If your PPM file doesn't look like this, then double-check your formatting code. If it <em>does</em> look like this but fails to render, then you may have line-ending differences or something similar that is confusing your image viewer. To help debug this, you can find a file <code>test.ppm</code> in the <code>images</code> directory of the Github project. This should help to ensure that your viewer can handle the PPM format and to use as a comparison against your generated PPM file.</p>
-<p>Some readers have reported problems viewing their generated files on Windows. In this case, the problem is often that the PPM is written out as UTF-16, often from PowerShell. If you run into this problem, see <a href="chapters/output_an_image/TODO">Discussion 1114</a> for help with this issue.</p>
+<p>Some readers have reported problems viewing their generated files on Windows. In this case, the problem is often that the PPM is written out as UTF-16, often from PowerShell. If you run into this problem, see <a href="https://github.com/RayTracing/raytracing.github.io/discussions/1114">Discussion 1114</a> for help with this issue.</p>
 <p>If everything displays correctly, then you're pretty much done with system and IDE issues — everything in the remainder of this series uses this same simple mechanism for generated rendered images.</p>
 <p>If you want to produce other image formats, I am a fan of <code>stb_image.h</code>, a header-only image library available on GitHub at <a href="https://github.com/nothings/stb">https://github.com/nothings/stb</a>.<sup class="footnote-reference" id="fr-22d-1"><a href="#footnote-22d">4</a></sup></p>
 <hr>
@@ -349,11 +353,12 @@ I have left that last part in because it is funny what a 180 I have done. Severa
      }
 +    log::info!("Done.");
 <span class="boring"> }</span></code></pre>
-<p><strong>Listing 3:</strong> [<a href="chapters/output_an_image/TODO">main.rs</a>] <em>Main render loop with progress reporting</em></p>
+<p><strong>Listing 3:</strong> [<a href="https://github.com/goldnor/code/blob/5c4dfec5c8122b0a6df768027866c4a526da8677/src/main.rs">main.rs</a>] <em>Main render loop with progress reporting</em></p>
+<br>
 <p>Now when running, you'll see a running count of the number of scanlines remaining. Hopefully this runs so fast that you don't even see it! Don't worry — you'll have lots of time in the future to watch a slowly updating progress line as we expand our ray tracer.</p>
 <hr>
 <ol class="footnote-definition"><li id="footnote-23a">
-<p>The <a href="https://crates.io/crates/log">log crate</a> with the <a href="https://crates.io/crates/env_logger">env_logger</a> implementation is a good alternative to <code>std::clog</code>. Run <code>RUST_LOG=info cargo r --bin indicator &gt; image.ppm</code> for the log output. <a href="#fr-23a-1">↩</a></p>
+<p>The <a href="https://crates.io/crates/log">log crate</a> with the <a href="https://crates.io/crates/env_logger">env_logger</a> implementation is a good alternative to <code>std::clog</code>. Run <code>RUST_LOG=info cargo r &gt; image.ppm</code> for the log output. <a href="#fr-23a-1">↩</a></p>
 </li>
 </ol><div style="break-before: page; page-break-before: always;"></div><h1 id="the-vec3-class-1"><a class="header" href="#the-vec3-class-1">The vec3 Class <sup class="footnote-reference" id="fr-3a-1"><a href="#footnote-3a">1</a></sup></a></h1>
 <p>Almost all graphics programs have some class(es) for storing geometric vectors and colors. In many systems these vectors are 4D (3D position plus a homogeneous coordinate for geometry, or RGB plus an alpha transparency component for colors). For our purposes, three coordinates suffice. We’ll use the same class vec3 for colors, locations, directions, offsets, whatever. Some people don’t like this because it doesn’t prevent you from doing something silly, like subtracting a position from a color. They have a good point, but we’re going to always take the “less code” route when not obviously wrong. In spite of this, we do declare two aliases for vec3: point3 and color. Since these two types are just aliases for vec3, you won't get warnings if you pass a color to a function expecting a point3, and nothing is stopping you from adding a point3 to a color, but it makes the code a little bit easier to read and to understand.</p>
@@ -534,7 +539,8 @@ pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
 pub fn unit_vector(v: Vec3) -&gt; Vec3 {
     v / v.length()
 }</code></pre>
-<p><strong>Listing 4:</strong> [<a href="chapters/the_vec3_class/TODO">vec3.rs</a>] <em>vec3 definitions and helper functions</em></p>
+<p><strong>Listing 4:</strong> [<a href="https://github.com/goldnor/code/blob/400e8e91847d5b2fbde6eb17432cbbe49794e28d/src/vec3.rs">vec3.rs</a>] <em>vec3 definitions and helper functions</em></p>
+<br>
 <p>We use double here, but some ray tracers use float. double has greater precision and range, but is twice the size compared to float. This increase in size may be important if you're programming in limited memory conditions (such as hardware shaders). Either one is fine — follow your own tastes.</p>
 <hr>
 <ol class="footnote-definition"><li id="footnote-3a">
@@ -557,7 +563,8 @@ pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::
 
     writeln!(out, "{rbyte} {gbyte} {bbyte}")
 }</code></pre>
-<p><strong>Listing 5:</strong> [<a href="chapters/the_vec3_class/TODO">color.rs</a>] <em>color utility functions</em></p>
+<p><strong>Listing 5:</strong> [<a href="https://github.com/goldnor/code/blob/6a4c63a317edcf4bb154fff3f817c561c2ed3aa9/src/color.rs">color.rs</a>] <em>color utility functions</em></p>
+<br>
 <p>Now we can change our main to use both of these:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
 </span><span class="boring">index 00cad27..bb37ee6 100644
@@ -604,12 +611,14 @@ pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::
 +
 +    Ok(())
  }</code></pre>
-<p><strong>Listing 6:</strong> [<a href="chapters/the_vec3_class/TODO">main.rs</a>] <em>Final code for the first PPM image</em></p>
+<p><strong>Listing 6:</strong> [<a href="https://github.com/goldnor/code/blob/7e3d601b91c93177f3b3d1ed98aa69d8ecf4ffee/src/main.rs">main.rs</a>)] <em>Final code for the first PPM image</em></p>
+<br>
 <p>And you should get the exact same picture as before.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="the-ray-class"><a class="header" href="#the-ray-class">The ray Class</a></h2>
 <p>The one thing that all ray tracers have is a ray class and a computation of what color is seen along a ray. Let’s think of a ray as a function \( \mathbf{P} (t) = \mathbf{A} + t \mathbf{b} \). Here \( \mathbf{P} \) is a 3D position along a line in 3D. \( \mathbf{A} \) is the ray origin and \( \mathbf{b} \) is the ray direction. The ray parameter \( t \) is a real number (double in the code). Plug in a different \( t \) and \( \mathbf{P} (t) \) moves the point along the ray. Add in negative \( t \) values and you can go anywhere on the 3D line. For positive \( t \), you get only the parts in front of \( \mathbf{A} \), and this is what is often called a half-line or a ray.</p>
 <p><img src="chapters/rays_a_simple_camera_and_background/../../imgs/fig-1.02-lerp.jpg" alt="Linear interpolation" /></p>
 <p><strong>Figure 2:</strong> <em>Linear interpolation</em></p>
+<br>
 <p>We can represent the idea of a ray as a class, and represent the function \( \mathbf{P} (t) \) as a function that we'll call <code>ray::at(t)</code>:</p>
 <pre><code class="language-rust norun noplayground">use crate::vec3::{Point3, Vec3};
 
@@ -636,7 +645,8 @@ impl Ray {
         self.origin + t * self.direction
     }
 }</code></pre>
-<p><strong>Listing 7:</strong> [<a href="chapters/rays_a_simple_camera_and_background/TODO">ray.rs</a>] <em>The ray class</em></p>
+<p><strong>Listing 7:</strong> [<a href="https://github.com/goldnor/code/blob/b54170d548e41ff6ea02b4eceb59269ee20b2a56/src/ray.rs">ray.rs</a>] <em>The ray class</em></p>
+<br>
 <p>(For those unfamiliar with C++, the functions ray::origin() and ray::direction() both return an immutable reference to their members. Callers can either just use the reference directly, or make a mutable copy depending on their needs.) <sup class="footnote-reference" id="fr-41a-1"><a href="#footnote-41a">1</a></sup></p>
 <hr>
 <ol class="footnote-definition"><li id="footnote-41a">
@@ -697,17 +707,20 @@ impl Ray {
 </span><span class="boring">    Ok(())
 </span><span class="boring">}</span></code></pre>
 <p><strong>Listing 8:</strong> <em>Rendered image setup</em></p>
+<br>
 <p>If you're wondering why we don't just use <code>aspect_ratio</code> when computing <code>viewport_width</code>, it's because the value set to <code>aspect_ratio</code> is the ideal ratio, it may not be the <em>actual</em> ratio between <code>image_width</code> and <code>image_height</code>. If <code>image_height</code> was allowed to be real valued—rather than just an integer—then it would be fine to use <code>aspect_ratio</code>. But the <em>actual</em> ratio between <code>image_width</code> and <code>image_height</code> can vary based on two parts of the code. First, <code>image_height</code> is rounded down to the nearest integer, which can increase the ratio. Second, we don't allow <code>image_height</code> to be less than one, which can also change the actual aspect ratio.</p>
 <p>Note that <code>aspect_ratio</code> is an ideal ratio, which we approximate as best as possible with the integer-based ratio of image width over image height. In order for our viewport proportions to exactly match our image proportions, we use the calculated image aspect ratio to determine our final viewport width.</p>
 <p>Next we will define the camera center: a point in 3D space from which all scene rays will originate (this is also commonly referred to as the <em>eye point</em>). The vector from the camera center to the viewport center will be orthogonal to the viewport. We'll initially set the distance between the viewport and the camera center point to be one unit. This distance is often referred to as the <em>focal length</em>.</p>
 <p>For simplicity we'll start with the camera center at \( (0,0,0) \). We'll also have the y-axis go up, the x-axis to the right, and the negative z-axis pointing in the viewing direction. (This is commonly referred to as <em>right-handed coordinates</em>.)</p>
 <p><img src="chapters/rays_a_simple_camera_and_background/../../imgs/fig-1.03-cam-geom.jpg" alt="Camera geometry" /></p>
 <p><strong>Figure 3:</strong> <em>Camera geometry</em></p>
+<br>
 <p>Now the inevitable tricky part. While our 3D space has the conventions above, this conflicts with our image coordinates, where we want to have the zeroth pixel in the top-left and work our way down to the last pixel at the bottom right. This means that our image coordinate Y-axis is inverted: Y increases going down the image.</p>
 <p>As we scan our image, we will start at the upper left pixel (pixel \( 0,0 \)), scan left-to-right across each row, and then scan row-by-row, top-to-bottom. To help navigate the pixel grid, we'll use a vector from the left edge to the right edge (\( \mathbf{V_u} \)), and a vector from the upper edge to the lower edge (\( \mathbf{V_v} \)).</p>
 <p>Our pixel grid will be inset from the viewport edges by half the pixel-to-pixel distance. This way, our viewport area is evenly divided into width × height identical regions. Here's what our viewport and pixel grid look like:</p>
 <p><img src="chapters/rays_a_simple_camera_and_background/../../imgs/fig-1.04-pixel-grid.jpg" alt="Viewport and pixel grid" /></p>
 <p><strong>Figure 4:</strong> <em>Viewport and pixel grid</em></p>
+<br>
 <p>In this figure, we have the viewport, the pixel grid for a 7×5 resolution image, the viewport upper left corner \( \mathbf{Q} \), the pixel \( \mathbf{P_{0,0}} \) location, the viewport vector \( \mathbf{V_u} \) (<code>viewport_u</code>), the viewport vector \( \mathbf{V_v} \) (<code>viewport_v</code>), and the pixel delta vectors \( \mathbf{\Delta u} \) and \( \mathbf{\Delta v} \).</p>
 <p>Drawing from all of this, here's the code that implements the camera. We'll stub in a function <code>ray_color(const ray&amp; r)</code> that returns the color for a given scene ray — which we'll set to always return black for now.</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
@@ -788,7 +801,8 @@ impl Ray {
  
      Ok(())
  }</code></pre>
-<p><strong>Listing 9:</strong> [<a href="chapters/rays_a_simple_camera_and_background/TODO">main.rs</a>] <em>Creating scene rays</em></p>
+<p><strong>Listing 9:</strong> [<a href="https://github.com/goldnor/code/blob/8f5c9042f86a1a778ef557f05162e6512ef2a85f/src/main.rs">main.rs</a>] <em>Creating scene rays</em></p>
+<br>
 <p>Notice that in the code above, I didn't make <code>ray_direction</code> a unit vector, because I think not doing that makes for simpler and slightly faster code.</p>
 <p>Now we'll fill in the <code>ray_color(ray)</code> function to implement a simple gradient. This function will linearly blend white and blue depending on the height of the \( y \) coordinate <em>after</em> scaling the ray direction to unit length (so \( -1.0 &lt; y &lt; 1.0 \)). Because we're looking at the 𝑦 height after normalizing the vector, you'll notice a horizontal gradient to the color in addition to the vertical gradient.</p>
 <p>I'll use a standard graphics trick to linearly scale \( 0.0 \leq a \leq 1.0 \). When \( a = 1.0 \), I want blue. When \( a = 0.0 \), I want white. In between, I want a blend. This forms a “linear blend”, or “linear interpolation”. This is commonly referred to as a <em>lerp</em> between two values. A lerp is always of the form</p>
@@ -869,10 +883,12 @@ impl Ray {
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 10:</strong> [<a href="chapters/rays_a_simple_camera_and_background/TODO">main.rs</a>] <em>Rendering a blue-to-white gradient</em></p>
+<p><strong>Listing 10:</strong> [<a href="https://github.com/goldnor/code/blob/d38202d1d50207cb9ff4bd6721dd88167e06feb6/src/main.rs">main.rs</a>] <em>Rendering a blue-to-white gradient</em></p>
+<br>
 <p>In our case this produces:</p>
 <img style="width: 100%" src="chapters/rays_a_simple_camera_and_background/../../imgs/img-1.02-blue-to-white.png" alt="A blue-to-white gradient depending on ray Y coordinate">
 <p><strong>Image 2:</strong> <em>A blue-to-white gradient depending on ray Y coordinate</em></p>
+<br>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="adding-a-sphere"><a class="header" href="#adding-a-sphere">Adding a Sphere</a></h1>
 <p>Let’s add a single object to our ray tracer. People often use spheres in ray tracers because calculating whether a ray hits a sphere is relatively simple.</p>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="ray-sphere-intersection"><a class="header" href="#ray-sphere-intersection">Ray-Sphere Intersection</a></h2>
@@ -903,8 +919,9 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 \[ b = -2 \mathbf{d} \cdot (\mathbf{C} - \mathbf{Q}) \]
 \[ c = (\mathbf{C} - \mathbf{Q}) \cdot (\mathbf{C} - \mathbf{Q}) - r^2 \]</p>
 <p>Using all of the above you can solve for \( t \), but there is a square root part that can be either positive (meaning two real solutions), negative (meaning no real solutions), or zero (meaning one real solution). In graphics, the algebra almost always relates very directly to the geometry. What we have is:</p>
-<p><img src="chapters/adding_a_sphere/../../imgs/fig-1.05-ray-sphere.jpg" alt="Ray-sphere intersection results" />
-<strong>Figure 5:</strong> <em>Ray-sphere intersection results</em></p>
+<p><img src="chapters/adding_a_sphere/../../imgs/fig-1.05-ray-sphere.jpg" alt="Ray-sphere intersection results" /></p>
+<p><strong>Figure 5:</strong> <em>Ray-sphere intersection results</em></p>
+<br>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
 <p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
@@ -994,10 +1011,12 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 11:</strong> [<a href="chapters/adding_a_sphere/TODO">main.rs</a>] <em>Rendering a red sphere</em></p>
+<p><strong>Listing 11:</strong> [<a href="https://github.com/goldnor/code/blob/2cf21871a39a309bce0edfb75464389bba9782f4/src/main.rs">main.rs</a>] <em>Rendering a red sphere</em></p>
+<br>
 <p>What we get is this:</p>
 <img style="width: 100%" src="chapters/adding_a_sphere/../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
 <p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+<br>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="shading-with-surface-normals"><a class="header" href="#shading-with-surface-normals">Shading with Surface Normals</a></h2>
 <p>First, let’s get ourselves a surface normal so we can shade. This is a vector that is perpendicular to the surface at the point of intersection.</p>
 <p>We have a key design decision to make for normal vectors in our code: whether normal vectors will have an arbitrary length, or will be normalized to unit length.</p>
@@ -1099,7 +1118,7 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 12:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>Rendering surface normals on a sphere</em></p>
+<p><strong>Listing 12:</strong> [<a href="https://github.com/goldnor/code/blob/47441cbbe4cb464b6f29e82801d47aba101092f2/src/main.rs">main.rs</a>] <em>Rendering surface normals on a sphere</em></p>
 <br>
 <p>And that yields this picture:</p>
 <img style="width: 100%" src="chapters/surface_normals_and_multiple_objects/../../imgs/img-1.04-normals-sphere.png" alt="A sphere colored according to its normal vectors">
@@ -1189,7 +1208,7 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 </span><span class="boring">
 </span><span class="boring">    Ok(())
 </span><span class="boring">}</span></code></pre>
-<p><strong>Listing 13:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>Ray-sphere intersection code (before)</em></p>
+<p><strong>Listing 13:</strong> [<a href="https://github.com/goldnor/code/blob/47441cbbe4cb464b6f29e82801d47aba101092f2/src/main.rs">main.rs</a>] <em>Ray-sphere intersection code (before)</em></p>
 <br>
 <p>First, recall that a vector dotted with itself is equal to the squared length of that vector.</p>
 <p>Second, notice how the equation for \( b \) has a factor of negative two in it. Consider what happens to the quadratic equation if \( b = 2h \):</p>
@@ -1294,7 +1313,7 @@ Then we can rewrite the equation of the sphere in vector form as:</p>
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 14:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>Ray-sphere intersection code (after)</em></p>
+<p><strong>Listing 14:</strong> [<a href="https://github.com/goldnor/code/blob/f878b49faaf7958cf88bf4748416acf7cfd61408/src/main.rs">main.rs</a>] <em>Ray-sphere intersection code (after)</em></p>
 <br>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="an-abstraction-for-hittable-objects"><a class="header" href="#an-abstraction-for-hittable-objects">An Abstraction for Hittable Objects</a></h2>
 <p>Now, how about more than one sphere? While it is tempting to have an array of spheres, a very clean solution is to make an “abstract class” for anything a ray might hit, and make both a sphere and a list of spheres just something that can be hit. What that class should be called is something of a quandary — calling it an “object” would be good if not for “object oriented” programming. “Surface” is often used, with the weakness being maybe we will want volumes (fog, clouds, stuff like that). “hittable” emphasizes the member function that unites them. I don’t love any of these, but we'll go with “hittable”.</p>
@@ -1314,7 +1333,7 @@ pub struct HitRecord {
 pub trait Hittable {
     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 }</code></pre>
-<p><strong>Listing 15:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>The hittable class</em></p>
+<p><strong>Listing 15:</strong> [<a href="https://github.com/goldnor/code/blob/1791ddbea0fdc81c13e4ef3daaaca7e440cec404/src/hittable.rs">hittable.rs</a>] <em>The hittable class</em></p>
 <br>
 <p>And here’s the sphere:</p>
 <pre><code class="language-rust norun noplayground">use crate::{
@@ -1372,7 +1391,7 @@ impl Hittable for Sphere {
         Some(rec)
     }
 }</code></pre>
-<p><strong>Listing 16:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>The sphere class</em></p>
+<p><strong>Listing 16:</strong> [<a href="https://github.com/goldnor/code/blob/36e5e545d452e57637150a4e1a8ba2ff93aee52b/src/sphere.rs">sphere.rs</a>] <em>The sphere class</em></p>
 <br>
 <p>(Note here that we use the C++ standard function <code>std::fmax()</code>, which returns the maximum of the two floating-point arguments. Similarly, we will later use <code>std::fmin()</code>, which returns the minimum of the two floating-point arguments.) <sup class="footnote-reference" id="fr-63b-1"><a href="#footnote-63b">2</a></sup></p>
 <hr>
@@ -1508,7 +1527,7 @@ impl Hittable for Sphere {
 </span><span class="boring"> pub trait Hittable {
 </span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 19:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>Adding front-face tracking to hit_record</em></p>
+<p><strong>Listing 19:</strong> [<a href="https://github.com/goldnor/code/blob/a1c2d4fad73108c42bb6612c0bdb02d2a9c6a7ed/src/hittable.rs">hittable.rs</a>] <em>Adding front-face tracking to hit_record</em></p>
 <br>
 <p>And then we add the surface side determination to the class:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
@@ -1575,7 +1594,7 @@ impl Hittable for Sphere {
          Some(rec)
      }
  }</code></pre>
-<p><strong>Listing 20:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>The sphere class with normal determination</em></p>
+<p><strong>Listing 20:</strong> [<a href="https://github.com/goldnor/code/blob/e54430867656af9ca129dfd3350fe4f0ead18d19/src/sphere.rs">sphere.rs</a>] <em>The sphere class with normal determination</em></p>
 <br>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="a-list-of-hittable-objects"><a class="header" href="#a-list-of-hittable-objects">A List of Hittable Objects</a></h2>
 <p>We have a generic object called a <code>hittable</code> that the ray can intersect with. We now add a class that stores a list of <code>hittables</code>:</p>
@@ -1613,7 +1632,7 @@ impl Hittable for HittableList {
             .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
     }
 }</code></pre>
-<p><strong>Listing 21:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable_list.rs</a>] <em>The hittable_list class</em></p>
+<p><strong>Listing 21:</strong> [<a href="https://github.com/goldnor/code/blob/86c110ccad16979ec62dce945725abab72499799/src/hittable_list.rs">hittable_list.rs</a>] <em>The hittable_list class</em></p>
 <br>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="some-new-c-features-1"><a class="header" href="#some-new-c-features-1">Some New C++ Features <sup class="footnote-reference" id="fr-66a-1"><a href="#footnote-66a">1</a></sup></a></h2>
 <p>The <code>hittable_list</code> class code uses some C++ features that may trip you up if you're not normally a C++ programmer: <code>vector</code>, <code>shared_ptr</code>, and <code>make_shared</code>. <sup class="footnote-reference" id="fr-66b-1"><a href="#footnote-66b">2</a></sup></p>
@@ -1681,11 +1700,11 @@ pub const PI: f64 = std::f64::consts::PI;
 // Common Headers
 
 pub use crate::{color::*, ray::*, vec3::*};</code></pre>
-<p><strong>Listing 24:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">prelude.rs</a>] <em>The rtweekend.h common header</em></p>
+<p><strong>Listing 24:</strong> [<a href="https://github.com/goldnor/code/blob/9e1b0c216e67d1bcf41de6ee6c449758c9cc33e5/src/prelude.rs">prelude.rs</a>] <em>The rtweekend.h common header</em></p>
 <br>
 <p>Program files will include <code>rtweekend.h</code> first, so all other header files (where the bulk of our code will reside) can implicitly assume that <code>rtweekend.h</code> has already been included. Header files still need to explicitly include any other necessary header files. We'll make some updates with these assumptions in mind.</p>
 <pre><code class="language-rust norun noplayground">// nothing changes</code></pre>
-<p><strong>Listing 25:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">color.rs</a>] <em>Assume rtweekend.h inclusion for color.h</em> <sup class="footnote-reference" id="fr-67b-1"><a href="#footnote-67b">2</a></sup></p>
+<p><strong>Listing 25:</strong> [<a href="https://github.com/goldnor/code/blob/9e1b0c216e67d1bcf41de6ee6c449758c9cc33e5/src/color.rs">color.rs</a>] <em>Assume rtweekend.h inclusion for color.h</em> <sup class="footnote-reference" id="fr-67b-1"><a href="#footnote-67b">2</a></sup></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
 </span><span class="boring">index 8ced826..a7aab5a 100644
@@ -1723,7 +1742,7 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
 </span><span class="boring"> pub trait Hittable {
 </span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 26:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>Assume rtweekend.h inclusion for hittable.h</em></p>
+<p><strong>Listing 26:</strong> [<a href="https://github.com/goldnor/code/blob/a83dfcb94c1741454b03fe57b8dc56e97a47c0cc/src/hittable.rs">hittable.rs</a>] <em>Assume rtweekend.h inclusion for hittable.h</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
 </span><span class="boring">index 95c24e4..7841161 100644
@@ -1765,7 +1784,7 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
 </span><span class="boring">             .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
 </span><span class="boring">     }
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 27:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable_list.rs</a>] <em>Assume rtweekend.h inclusion for hittable_list.h</em></p>
+<p><strong>Listing 27:</strong> [<a href="https://github.com/goldnor/code/blob/fd505c6bc51cd1887e71b1ce44fe0ee32a1fb198/src/hittable_list.rs">hittable_list.rs</a>] <em>Assume rtweekend.h inclusion for hittable_list.h</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
 </span><span class="boring">index 86d3cbb..9de9f72 100644
@@ -1830,10 +1849,10 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
 </span><span class="boring">         Some(rec)
 </span><span class="boring">     }
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 28:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>Assume rtweekend.h inclusion for sphere.h</em></p>
+<p><strong>Listing 28:</strong> [<a href="https://github.com/goldnor/code/blob/d57e0ab6d5de95b5d3105a150a69c552e4eeb167/src/sphere.rs">sphere.rs</a>] <em>Assume rtweekend.h inclusion for sphere.h</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground">// nothing changes</code></pre>
-<p><strong>Listing 29:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">vec3.rs</a>] <em>Assume rtweekend.h inclusion for vec3.h</em></p>
+<p><strong>Listing 29:</strong> [<a href="https://github.com/goldnor/code/blob/d57e0ab6d5de95b5d3105a150a69c552e4eeb167/src/vec3.rs">vec3.rs</a>] <em>Assume rtweekend.h inclusion for vec3.h</em></p>
 <br>
 <p>And now the new main:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
@@ -1937,7 +1956,7 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
  
      Ok(())
  }</code></pre>
-<p><strong>Listing 30:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>The new main with hittables</em></p>
+<p><strong>Listing 30:</strong> [<a href="https://github.com/goldnor/code/blob/e19dd26432882f6c779f25632318690a3be5a4ac/src/main.rs">main.rs</a>] <em>The new main with hittables</em></p>
 <br>
 <p>This yields a picture that is really just a visualization of where the spheres are located along with their surface normal. This is often a great way to view any flaws or specific characteristics of a geometric model.</p>
 <img style="width: 100%" src="chapters/surface_normals_and_multiple_objects/../../imgs/img-1.05-normals-sphere-ground.png" alt=" Resulting render of normals-colored sphere with ground">
@@ -1991,7 +2010,7 @@ impl Interval {
         self.min &lt; x &amp;&amp; x &lt; self.max
     }
 }</code></pre>
-<p><strong>Listing 31:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">interval.rs</a>] <em>Introducing the new interval class</em></p>
+<p><strong>Listing 31:</strong> [<a href="https://github.com/goldnor/code/blob/b97cce927b5c04bc925b77462cef0a4ce6152d4a/src/interval.rs">interval.rs</a>] <em>Introducing the new interval class</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/prelude.rs b/src/prelude.rs
 </span><span class="boring">index fcd4621..2ec9487 100644
@@ -2013,7 +2032,7 @@ impl Interval {
  
 <span class="boring">-pub use crate::{color::*, ray::*, vec3::*};
 </span>+pub use crate::{color::*, interval::Interval, ray::*, vec3::*};</code></pre>
-<p><strong>Listing 32:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">prelude.rs</a>] <em>Including the new interval class</em></p>
+<p><strong>Listing 32:</strong> [<a href="https://github.com/goldnor/code/blob/7fc2aa1432889497ecb73854719905b0ed276a68/src/prelude.rs">prelude.rs</a>] <em>Including the new interval class</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
 </span><span class="boring">index a7aab5a..1b65b92 100644
@@ -2048,7 +2067,7 @@ impl Interval {
 <span class="boring">-    fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 </span>+    fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt;;
  }</code></pre>
-<p><strong>Listing 33:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable.rs</a>] <em>hittable::hit() using interval</em></p>
+<p><strong>Listing 33:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/hittable.rs">hittable.rs</a>] <em>hittable::hit() using interval</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
 </span><span class="boring">index 7841161..4647aa5 100644
@@ -2089,7 +2108,7 @@ impl Interval {
              .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
      }
  }</code></pre>
-<p><strong>Listing 34:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">hittable_list.rs</a>] <em>hittable_list::hit() using interval</em></p>
+<p><strong>Listing 34:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/hittable_list.rs">hittable_list.rs</a>] <em>hittable_list::hit() using interval</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
 </span><span class="boring">index 9de9f72..a2710b4 100644
@@ -2155,7 +2174,7 @@ impl Interval {
 </span><span class="boring">         Some(rec)
 </span>     }
  }</code></pre>
-<p><strong>Listing 35:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">sphere.rs</a>] <em>sphere using interval</em></p>
+<p><strong>Listing 35:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/sphere.rs">sphere.rs</a>] <em>sphere using interval</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
 </span><span class="boring">index 59c000b..a8d3932 100644
@@ -2237,9 +2256,797 @@ impl Interval {
 </span><span class="boring"> 
 </span><span class="boring">     Ok(())
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 36:</strong> [<a href="chapters/surface_normals_and_multiple_objects/TODO">main.rs</a>] <em>The new main using interval</em></p>
+<p><strong>Listing 36:</strong> [<a href="https://github.com/goldnor/code/blob/d75c2cf12d1747e49e2568b2d4718ea5efea86e5/src/main.rs">main.rs</a>] <em>The new main using interval</em></p>
 <br>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="moving-camera-code-into-its-own-class"><a class="header" href="#moving-camera-code-into-its-own-class">Moving Camera Code Into Its Own Class</a></h1>
+<p>Before continuing, now is a good time to consolidate our camera and scene-render code into a single new class: the <code>camera</code> class. The camera class will be responsible for two important jobs:</p>
+<ol>
+<li>Construct and dispatch rays into the world.</li>
+<li>Use the results of these rays to construct the rendered image.</li>
+</ol>
+<p>In this refactoring, we'll collect the <code>ray_color()</code> function, along with the image, camera, and render sections of our main program. The new camera class will contain two public methods <code>initialize()</code> and <code>render()</code>, plus two private helper methods <code>get_ray()</code> and <code>ray_color()</code>.</p>
+<p>Ultimately, the camera will follow the simplest usage pattern that we could think of: it will be default constructed no arguments, then the owning code will modify the camera's public variables through simple assignment, and finally everything is initialized by a call to the <code>initialize()</code> function. This pattern is chosen instead of the owner calling a constructor with a ton of parameters or by defining and calling a bunch of setter methods. Instead, the owning code only needs to set what it explicitly cares about. Finally, we could either have the owning code call <code>initialize()</code>, or just have the camera call this function automatically at the start of <code>render()</code>. We'll use the second approach. <sup class="footnote-reference" id="fr-7a-1"><a href="#footnote-7a">1</a></sup></p>
+<p>After main creates a camera and sets default values, it will call the <code>render()</code> method. The <code>render()</code> method will prepare the <code>camera</code> for rendering and then execute the render loop.</p>
+<p>Here's the skeleton of our new <code>camera</code> class:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring">
+</span><span class="boring">pub struct Camera {
+</span><span class="boring">    /// Ratio of image width over height
+</span><span class="boring">    pub aspect_ratio: f64,
+</span><span class="boring">    /// Rendered image width in pixel count
+</span><span class="boring">    pub image_width: i32,
+</span><span class="boring">
+</span><span class="boring">    /// Rendered image height
+</span><span class="boring">    image_height: i32,
+</span><span class="boring">    /// Camera center
+</span><span class="boring">    center: Point3,
+</span><span class="boring">    /// Location of pixel 0, 0
+</span><span class="boring">    pixel00_loc: Point3,
+</span><span class="boring">    /// Offset to pixel to the right
+</span><span class="boring">    pixel_delta_u: Vec3,
+</span><span class="boring">    /// Offset to pixel below
+</span><span class="boring">    pixel_delta_v: Vec3,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Default for Camera {
+</span><span class="boring">    fn default() -&gt; Self {
+</span><span class="boring">        Self {
+</span><span class="boring">            aspect_ratio: 1.0,
+</span><span class="boring">            image_width: 100,
+</span><span class="boring">            image_height: Default::default(),
+</span><span class="boring">            center: Default::default(),
+</span><span class="boring">            pixel00_loc: Default::default(),
+</span><span class="boring">            pixel_delta_u: Default::default(),
+</span><span class="boring">            pixel_delta_v: Default::default(),
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span>impl Camera {
+    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+<span class="boring">        self.aspect_ratio = aspect_ratio;
+</span>
+<span class="boring">        self
+</span>    }
 
+    pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+<span class="boring">        self.image_width = image_width;
+</span>
+<span class="boring">        self
+</span>    }
+
+    pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+<span class="boring">        self.initialize();
+</span>
+<span class="boring">        println!("P3");
+</span><span class="boring">        println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">        println!("255");
+</span><span class="boring">
+</span><span class="boring">        for j in 0..self.image_height {
+</span><span class="boring">            info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">            for i in 0..self.image_width {
+</span><span class="boring">                let pixel_center = self.pixel00_loc
+</span><span class="boring">                    + (i as f64) * self.pixel_delta_u
+</span><span class="boring">                    + (j as f64) * self.pixel_delta_v;
+</span><span class="boring">                let ray_direction = pixel_center - self.center;
+</span><span class="boring">                let r = Ray::new(self.center, ray_direction);
+</span><span class="boring">
+</span><span class="boring">                let pixel_color = Self::ray_color(r, world);
+</span><span class="boring">                write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">            }
+</span><span class="boring">        }
+</span><span class="boring">        info!("Done.");
+</span><span class="boring">
+</span><span class="boring">        Ok(())
+</span>    }
+
+    fn initialize(&amp;mut self) {
+<span class="boring">        self.image_height = {
+</span><span class="boring">            let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">            if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">        };
+</span>
+<span class="boring">        self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Determine viewport dimensions.
+</span><span class="boring">        let focal_length = 1.0;
+</span><span class="boring">        let viewport_height = 2.0;
+</span><span class="boring">        let viewport_width =
+</span><span class="boring">            viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">        self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">        self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring">
+</span><span class="boring">        // Calculate the location of the upper left pixel.
+</span><span class="boring">        let viewport_upper_left =
+</span><span class="boring">            self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span>    }
+
+    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">        if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">        }
+</span>
+<span class="boring">        let unit_direction = unit_vector(r.direction());
+</span><span class="boring">        let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>    }
+}</code></pre>
+<p><strong>Listing 37:</strong> [<a href="https://github.com/goldnor/code/blob/9b893f7953de35ce34fad2062845cb4d0202c21e/src/camera.rs">camera.rs</a>] <em>The camera class skeleton</em></p>
+<br>
+<p>To begin with, let's fill in the <code>ray_color()</code> function from <code>main.cc</code>:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring">
+</span><span class="boring">pub struct Camera {
+</span><span class="boring">    /// Ratio of image width over height
+</span><span class="boring">    pub aspect_ratio: f64,
+</span><span class="boring">    /// Rendered image width in pixel count
+</span><span class="boring">    pub image_width: i32,
+</span><span class="boring">
+</span><span class="boring">    /// Rendered image height
+</span><span class="boring">    image_height: i32,
+</span><span class="boring">    /// Camera center
+</span><span class="boring">    center: Point3,
+</span><span class="boring">    /// Location of pixel 0, 0
+</span><span class="boring">    pixel00_loc: Point3,
+</span><span class="boring">    /// Offset to pixel to the right
+</span><span class="boring">    pixel_delta_u: Vec3,
+</span><span class="boring">    /// Offset to pixel below
+</span><span class="boring">    pixel_delta_v: Vec3,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Default for Camera {
+</span><span class="boring">    fn default() -&gt; Self {
+</span><span class="boring">        Self {
+</span><span class="boring">            aspect_ratio: 1.0,
+</span><span class="boring">            image_width: 100,
+</span><span class="boring">            image_height: Default::default(),
+</span><span class="boring">            center: Default::default(),
+</span><span class="boring">            pixel00_loc: Default::default(),
+</span><span class="boring">            pixel_delta_u: Default::default(),
+</span><span class="boring">            pixel_delta_v: Default::default(),
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span>impl Camera {
+<span class="boring">    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+</span><span class="boring">        self.aspect_ratio = aspect_ratio;
+</span><span class="boring">
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+</span><span class="boring">        self.image_width = image_width;
+</span><span class="boring">
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">        self.initialize();
+</span><span class="boring">
+</span><span class="boring">        println!("P3");
+</span><span class="boring">        println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">        println!("255");
+</span><span class="boring">
+</span><span class="boring">        for j in 0..self.image_height {
+</span><span class="boring">            info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">            for i in 0..self.image_width {
+</span><span class="boring">                let pixel_center = self.pixel00_loc
+</span><span class="boring">                    + (i as f64) * self.pixel_delta_u
+</span><span class="boring">                    + (j as f64) * self.pixel_delta_v;
+</span><span class="boring">                let ray_direction = pixel_center - self.center;
+</span><span class="boring">                let r = Ray::new(self.center, ray_direction);
+</span><span class="boring">
+</span><span class="boring">                let pixel_color = Self::ray_color(r, world);
+</span><span class="boring">                write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">            }
+</span><span class="boring">        }
+</span><span class="boring">        info!("Done.");
+</span><span class="boring">
+</span><span class="boring">        Ok(())
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn initialize(&amp;mut self) {
+</span><span class="boring">        self.image_height = {
+</span><span class="boring">            let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">            if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">        };
+</span><span class="boring">
+</span><span class="boring">        self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Determine viewport dimensions.
+</span><span class="boring">        let focal_length = 1.0;
+</span><span class="boring">        let viewport_height = 2.0;
+</span><span class="boring">        let viewport_width =
+</span><span class="boring">            viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">
+</span><span class="boring">        // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">        self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">        self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring">
+</span><span class="boring">        // Calculate the location of the upper left pixel.
+</span><span class="boring">        let viewport_upper_left =
+</span><span class="boring">            self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span><span class="boring">    }
+</span><span class="boring">
+</span>    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+        if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+        }
+
+        let unit_direction = unit_vector(r.direction());
+        let a = 0.5 * (unit_direction.y() + 1.0);
+        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+    }
+}</code></pre>
+<p><strong>Listing 38:</strong> [<a href="https://github.com/goldnor/code/blob/9b893f7953de35ce34fad2062845cb4d0202c21e/src/camera.rs">camera.rs</a>] <em>The camera::ray_color function</em></p>
+<br>
+<p>Now we move almost everything from the <code>main()</code> function into our new camera class. The only thing remaining in the <code>main()</code> function is the world construction. Here's the camera class with newly migrated code:</p>
+<pre><code class="language-rust norun noplayground">use crate::{hittable::Hittable, prelude::*};
+
+pub struct Camera {
+    /// Ratio of image width over height
+    pub aspect_ratio: f64,
+    /// Rendered image width in pixel count
+    pub image_width: i32,
+
+    /// Rendered image height
+    image_height: i32,
+    /// Camera center
+    center: Point3,
+    /// Location of pixel 0, 0
+    pixel00_loc: Point3,
+    /// Offset to pixel to the right
+    pixel_delta_u: Vec3,
+    /// Offset to pixel below
+    pixel_delta_v: Vec3,
+}
+
+impl Default for Camera {
+    fn default() -&gt; Self {
+        Self {
+            aspect_ratio: 1.0,
+            image_width: 100,
+            image_height: Default::default(),
+            center: Default::default(),
+            pixel00_loc: Default::default(),
+            pixel_delta_u: Default::default(),
+            pixel_delta_v: Default::default(),
+        }
+    }
+}
+
+impl Camera {
+    pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+        self.aspect_ratio = aspect_ratio;
+
+        self
+    }
+
+    pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+        self.image_width = image_width;
+
+        self
+    }
+
+    pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+        self.initialize();
+
+        println!("P3");
+        println!("{} {}", self.image_width, self.image_height);
+        println!("255");
+
+        for j in 0..self.image_height {
+            info!("Scanlines remaining: {}", self.image_height - j);
+            for i in 0..self.image_width {
+                let pixel_center = self.pixel00_loc
+                    + (i as f64) * self.pixel_delta_u
+                    + (j as f64) * self.pixel_delta_v;
+                let ray_direction = pixel_center - self.center;
+                let r = Ray::new(self.center, ray_direction);
+
+                let pixel_color = Self::ray_color(r, world);
+                write_color(std::io::stdout(), pixel_color)?;
+            }
+        }
+        info!("Done.");
+
+        Ok(())
+    }
+
+    fn initialize(&amp;mut self) {
+        self.image_height = {
+            let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+            if image_height &lt; 1 { 1 } else { image_height }
+        };
+
+        self.center = Point3::new(0.0, 0.0, 0.0);
+
+        // Determine viewport dimensions.
+        let focal_length = 1.0;
+        let viewport_height = 2.0;
+        let viewport_width =
+            viewport_height * (self.image_width as f64) / (self.image_height as f64);
+
+        // Calculate the vectors across the horizontal and down the vertical viewport edges.
+        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+
+        // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+        self.pixel_delta_u = viewport_u / self.image_width as f64;
+        self.pixel_delta_v = viewport_v / self.image_height as f64;
+
+        // Calculate the location of the upper left pixel.
+        let viewport_upper_left =
+            self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+    }
+
+    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">        if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">        }
+</span>
+<span class="boring">        let unit_direction = unit_vector(r.direction());
+</span><span class="boring">        let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>    }
+}</code></pre>
+<p><strong>Listing 39:</strong> [<a href="https://github.com/goldnor/code/blob/9b893f7953de35ce34fad2062845cb4d0202c21e/src/camera.rs">camera.rs</a>] <em>The working camera class</em></p>
+<br>
+<p>And here's the much reduced main:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index a8d3932..27377f1 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,74 +1,15 @@
+</span><span class="boring">-use code::{hittable::Hittable, hittable_list::HittableList, prelude::*, sphere::Sphere};
+</span><span class="boring">-
+</span>-fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">-    if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">-        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">-    }
+</span>-
+<span class="boring">-    let unit_direction = unit_vector(r.direction());
+</span><span class="boring">-    let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">-    (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>-}
+-
+<span class="boring">-fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">-    // Image
+</span><span class="boring">-
+</span><span class="boring">-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+</span><span class="boring">-    const IMAGE_WIDTH: i32 = 400;
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the image height, and ensure that it's at least 1.
+</span><span class="boring">-    const IMAGE_HEIGHT: i32 = {
+</span><span class="boring">-        let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
+</span><span class="boring">-        if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">-    };
+</span><span class="boring">-
+</span><span class="boring">-    // World
+</span>+use code::{camera::Camera, hittable_list::HittableList, prelude::*, sphere::Sphere};
+ 
++fn main() -&gt; std::io::Result&lt;()&gt; {
+     let mut world = HittableList::new();
+ 
+     world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+     world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+ 
+<span class="boring">-    // Camera
+</span><span class="boring">-
+</span><span class="boring">-    let focal_length = 1.0;
+</span><span class="boring">-    let viewport_height = 2.0;
+</span><span class="boring">-    let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
+</span><span class="boring">-    let camera_center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">-    let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">-    let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">-    let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
+</span><span class="boring">-    let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
+</span><span class="boring">-
+</span><span class="boring">-    // Calculate the location of the upper left pixel.
+</span><span class="boring">-    let viewport_upper_left =
+</span><span class="boring">-        camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">-    let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+</span><span class="boring">-
+</span><span class="boring">-    // Render
+</span><span class="boring">-
+</span>     env_logger::init();
+<span class="boring">-    println!("P3");
+</span><span class="boring">-    println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
+</span><span class="boring">-    println!("255");
+</span><span class="boring">-
+</span><span class="boring">-    for j in 0..IMAGE_HEIGHT {
+</span><span class="boring">-        info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
+</span><span class="boring">-        for i in 0..IMAGE_WIDTH {
+</span><span class="boring">-            let pixel_center =
+</span><span class="boring">-                pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
+</span><span class="boring">-            let ray_direction = pixel_center - camera_center;
+</span><span class="boring">-            let r = Ray::new(camera_center, ray_direction);
+</span><span class="boring">-
+</span><span class="boring">-            let pixel_color = ray_color(r, &amp;world);
+</span><span class="boring">-            write_color(std::io::stdout(), pixel_color)?;
+</span><span class="boring">-        }
+</span><span class="boring">-    }
+</span><span class="boring">-    info!("Done.");
+</span> 
+<span class="boring">-    Ok(())
+</span>+    Camera::default()
++        .with_aspect_ratio(16.0 / 9.0)
++        .with_image_width(400)
++        .render(&amp;world)
+ }
+</code></pre>
+<p><strong>Listing 40:</strong> [<a href="https://github.com/goldnor/code/blob/1ffb3c6125e9e07efe10f448e9f1adc0b5800a1d/src/main.rs">main.rs</a>] <em>The new main, using the new camera</em></p>
+<br>
+<p>Running this newly refactored program should give us the same rendered image as before.</p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-7a">
+<p>The idiomatic Rust solution for this type of problem is the builder pattern. Important parameters can be set either directly with struct access or via a convenient method chain in the owning code. <a href="#fr-7a-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h1 id="antialiasing"><a class="header" href="#antialiasing">Antialiasing</a></h1>
+<p>If you zoom into the rendered images so far, you might notice the harsh “stair step” nature of edges in our rendered images. This stair-stepping is commonly referred to as “aliasing”, or “jaggies”. When a real camera takes a picture, there are usually no jaggies along edges, because the edge pixels are a blend of some foreground and some background. Consider that unlike our rendered images, a true image of the world is continuous. Put another way, the world (and any true image of it) has effectively infinite resolution. We can get the same effect by averaging a bunch of samples for each pixel.</p>
+<p>With a single ray through the center of each pixel, we are performing what is commonly called <em>point sampling</em>. The problem with point sampling can be illustrated by rendering a small checkerboard far away. If this checkerboard consists of an 8×8 grid of black and white tiles, but only four rays hit it, then all four rays might intersect only white tiles, or only black, or some odd combination. In the real world, when we perceive a checkerboard far away with our eyes, we perceive it as a gray color, instead of sharp points of black and white. That's because our eyes are naturally doing what we want our ray tracer to do: integrate the (continuous function of) light falling on a particular (discrete) region of our rendered image.</p>
+<p>Clearly we don't gain anything by just resampling the same ray through the pixel center multiple times — we'd just get the same result each time. Instead, we want to sample the light falling <em>around</em> the pixel, and then integrate those samples to approximate the true continuous result. So, how do we integrate the light falling around the pixel?</p>
+<p>We'll adopt the simplest model: sampling the square region centered at the pixel that extends halfway to each of the four neighboring pixels. This is not the optimal approach, but it is the most straight-forward. (See <a href="https://www.researchgate.net/publication/244986797_A_Pixel_Is_Not_A_Little_Square_A_Pixel_Is_Not_A_Little_Square_A_Pixel_Is_Not_A_Little_Square">A Pixel is Not a Little Square</a> for a deeper dive into this topic.)</p>
+<p><img src="chapters/antialiasing/../../imgs/fig-1.08-pixel-samples.jpg" alt="Pixel samples" /></p>
+<p><strong>Figure 8:</strong> <em>Pixel samples</em></p>
+<br>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="some-random-number-utilities-1"><a class="header" href="#some-random-number-utilities-1">Some Random Number Utilities <sup class="footnote-reference" id="fr-81a-1"><a href="#footnote-81a">1</a></sup></a></h1>
+<p>We're going to need a random number generator that returns real random numbers. This function should return a canonical random number, which by convention falls in the range \( 0 \le n &lt; 1 \). The “less than” before the \( 1 \) is important, as we will sometimes take advantage of that.</p>
+<p>A simple approach to this is to use the <code>std::rand()</code> function that can be found in <code>&lt;cstdlib&gt;</code>, which returns a random integer in the range <code>0</code> and <code>RAND_MAX</code>. Hence we can get a real random number as desired with the following code snippet, added to <code>rtweekend.h</code>:</p>
+<pre><code class="language-rust norun noplayground">// Utility Functions
+
+#[inline]
+pub fn degrees_to_radians(degrees: f64) -&gt; f64 {
+    degrees.to_radians()
+}
+
+#[inline]
+pub fn random_double() -&gt; f64 {
+    // Returns a random real in [0,1).
+    rand::random::&lt;i32&gt;() as f64 / (i32::MAX as f64 + 1.0)
+}
+
+#[inline]
+pub fn random_double_range(min: f64, max: f64) -&gt; f64 {
+    // Returns a random real in [min,max).
+    min + (max - min) * random_double()
+}</code></pre>
+<p><strong>Listing 41:</strong> [<a href="https://github.com/goldnor/code/blob/48d27302c1d726208b8f952050bcca45e53dc756/src/prelude.rs">prelude.rs</a>] <em>random_double() functions</em></p>
+<p>C++ did not traditionally have a standard random number generator, but newer versions of C++ have addressed this issue with the <code>&lt;random&gt;</code> header (if imperfectly according to some experts). <sup class="footnote-reference" id="fr-81b-1"><a href="#footnote-81b">2</a></sup> If you want to use this, you can obtain a random number with the conditions we need as follows:</p>
+<p><a name="l42"></a></p>
+<pre><code class="language-rust norun noplayground">// Utility Functions
+
+#[inline]
+pub fn degrees_to_radians(degrees: f64) -&gt; f64 {
+    degrees.to_radians()
+}
+
+#[inline]
+pub fn random_double() -&gt; f64 {
+    // Returns a random real in [0,1).
+    rand::random()
+}
+
+#[inline]
+pub fn random_double_range(min: f64, max: f64) -&gt; f64 {
+    // Returns a random real in [min,max).
+    rand::random_range(min..max)
+}</code></pre>
+<p><strong>Listing 42:</strong> [<a href="https://github.com/goldnor/code/blob/48d27302c1d726208b8f952050bcca45e53dc756/src/prelude.rs">prelude.rs</a>] <em>random_double() functions</em></p>
+<hr>
+<ol class="footnote-definition"><li id="footnote-81a">
+<p>The utility functions, such as <code>degrees_to_radians</code>, were not mentioned in <a href="chapters/antialiasing/../surface_normals_and_multiple_objects/common_constants_and_utility_functions.html">chapter 6.7</a> since Rust already provides this functionality by default. The utility functions for randomness described in this chapter will also not be included in the code, as they only wrap functions implemented in the Rust <a href="https://crates.io/crates/rand">rand crate</a> (see <a href="chapters/antialiasing/some_random_number_utilities.html#l42">listing 42</a>). <a href="#fr-81a-1">↩</a></p>
+</li>
+<li id="footnote-81b">
+<p>As far as I am aware, the Rust implementation is perfectly fine. <a href="#fr-81b-1">↩</a></p>
+</li>
+</ol><div style="break-before: page; page-break-before: always;"></div><h1 id="generating-pixels-with-multiple-samples"><a class="header" href="#generating-pixels-with-multiple-samples">Generating Pixels with Multiple Samples</a></h1>
+<p>For a single pixel composed of multiple samples, we'll select samples from the area surrounding the pixel and average the resulting light (color) values together.</p>
+<p>First we'll update the <code>write_color()</code> function to account for the number of samples we use: we need to find the average across all of the samples that we take. To do this, we'll add the full color from each iteration, and then finish with a single division (by the number of samples) at the end, before writing out the color. To ensure that the color components of the final result remain within the proper \( [0,1] \) bounds, we'll add and use a small helper function: <code>interval::clamp(x)</code>. <sup class="footnote-reference" id="fr-82a-1"><a href="#footnote-82a">1</a></sup> <sup class="footnote-reference" id="fr-82b-1"><a href="#footnote-82b">2</a></sup></p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/interval.rs b/src/interval.rs
+</span><span class="boring">index 509fddf..482d922 100644
+</span><span class="boring">--- a/src/interval.rs
+</span><span class="boring">+++ b/src/interval.rs
+</span><span class="boring">@@ -1,39 +1,43 @@
+</span><span class="boring"> #[derive(Debug, Clone, Copy)]
+</span><span class="boring"> pub struct Interval {
+</span><span class="boring">     pub min: f64,
+</span><span class="boring">     pub max: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Default for Interval {
+</span><span class="boring">     fn default() -&gt; Self {
+</span><span class="boring">         Self::EMPTY
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Interval {
+<span class="boring">     pub const EMPTY: Self = Self {
+</span><span class="boring">         min: f64::INFINITY,
+</span><span class="boring">         max: f64::NEG_INFINITY,
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">     pub const UNIVERSE: Self = Self {
+</span><span class="boring">         min: f64::NEG_INFINITY,
+</span><span class="boring">         max: f64::INFINITY,
+</span><span class="boring">     };
+</span><span class="boring"> 
+</span><span class="boring">-    pub fn new(min: f64, max: f64) -&gt; Self {
+</span><span class="boring">+    pub const fn new(min: f64, max: f64) -&gt; Self {
+</span><span class="boring">         Self { min, max }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn size(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.max - self.min
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn contains(&amp;self, x: f64) -&gt; bool {
+</span><span class="boring">         self.min &lt;= x &amp;&amp; x &lt;= self.max
+</span><span class="boring">     }
+</span> 
+     pub fn surrounds(&amp;self, x: f64) -&gt; bool {
+         self.min &lt; x &amp;&amp; x &lt; self.max
+     }
++
++    pub const fn clamp(&amp;self, x: f64) -&gt; f64 {
++        x.clamp(self.min, self.max)
++    }
+ }</code></pre>
+<p><strong>Listing 43:</strong> [<a href="https://github.com/goldnor/code/blob/c2937087b619981d108b6774b790af1d59316329/src/interval.rs">interval.rs</a>] <em>The interval::clamp() utility function</em></p>
+<br>
+<p>Here's the updated <code>write_color()</code> function that incorporates the interval clamping function:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/color.rs b/src/color.rs
+</span><span class="boring">index c645ca2..1615d55 100644
+</span><span class="boring">--- a/src/color.rs
+</span><span class="boring">+++ b/src/color.rs
+</span><span class="boring">@@ -1,15 +1,18 @@
+</span><span class="boring">-use crate::vec3::Vec3;
+</span>+use crate::prelude::*;
+ 
+ pub type Color = Vec3;
+ 
+ pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::io::Result&lt;()&gt; {
+     let r = pixel_color.x();
+     let g = pixel_color.y();
+     let b = pixel_color.z();
+ 
+<span class="boring">-    let rbyte = (255.999 * r) as i32;
+</span><span class="boring">-    let gbyte = (255.999 * g) as i32;
+</span><span class="boring">-    let bbyte = (255.999 * b) as i32;
+</span>+    // Translate the [0,1] component values to the byte range [0,255].
++    const INTENSITY: Interval = Interval::new(0.000, 0.999);
++    let rbyte = (256.0 * INTENSITY.clamp(r)) as i32;
++    let gbyte = (256.0 * INTENSITY.clamp(g)) as i32;
++    let bbyte = (256.0 * INTENSITY.clamp(b)) as i32;
+ 
++    // Write out the pixel color components.
+     writeln!(out, "{rbyte} {gbyte} {bbyte}")
+ }</code></pre>
+<p><strong>Listing 44:</strong> [<a href="https://github.com/goldnor/code/blob/f9b02376bc5c4d4f7337d6fef6903506086925da/src/color.rs">color.rs</a>] <em>The multi-sample write_color() function</em></p>
+<br>
+<p>Now let's update the camera class to define and use a new <code>camera::get_ray(i,j)</code> function, which will generate different samples for each pixel. This function will use a new helper function <code>sample_square()</code> that generates a random sample point within the unit square centered at the origin. We then transform the random sample from this ideal square back to the particular pixel we're currently sampling.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/camera.rs b/src/camera.rs
+</span><span class="boring">index 73dc5cc..f181b03 100644
+</span><span class="boring">--- a/src/camera.rs
+</span><span class="boring">+++ b/src/camera.rs
+</span><span class="boring">@@ -1,110 +1,151 @@
+</span><span class="boring"> use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring"> 
+</span> pub struct Camera {
+     /// Ratio of image width over height
+     pub aspect_ratio: f64,
+     /// Rendered image width in pixel count
+     pub image_width: i32,
++    // Count of random samples for each pixel
++    pub samples_per_pixel: i32,
+ 
+     /// Rendered image height
+     image_height: i32,
++    // Color scale factor for a sum of pixel samples
++    pixel_samples_scale: f64,
+     /// Camera center
+     center: Point3,
+     /// Location of pixel 0, 0
+     pixel00_loc: Point3,
+     /// Offset to pixel to the right
+     pixel_delta_u: Vec3,
+     /// Offset to pixel below
+     pixel_delta_v: Vec3,
+ }
+ 
+ impl Default for Camera {
+     fn default() -&gt; Self {
+         Self {
+             aspect_ratio: 1.0,
+             image_width: 100,
++            samples_per_pixel: 10,
+             image_height: Default::default(),
++            pixel_samples_scale: Default::default(),
+             center: Default::default(),
+             pixel00_loc: Default::default(),
+             pixel_delta_u: Default::default(),
+             pixel_delta_v: Default::default(),
+         }
+     }
+ }
+ 
+ impl Camera {
+<span class="boring">     pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+</span><span class="boring">         self.aspect_ratio = aspect_ratio;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+</span><span class="boring">         self.image_width = image_width;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span> 
++    pub fn with_samples_per_pixel(mut self, samples_per_pixel: i32) -&gt; Self {
++        self.samples_per_pixel = samples_per_pixel;
++
++        self
++    }
++
+     pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+         self.initialize();
+ 
+         println!("P3");
+         println!("{} {}", self.image_width, self.image_height);
+         println!("255");
+ 
+         for j in 0..self.image_height {
+             info!("Scanlines remaining: {}", self.image_height - j);
+             for i in 0..self.image_width {
+<span class="boring">-                let pixel_center = self.pixel00_loc
+</span><span class="boring">-                    + (i as f64) * self.pixel_delta_u
+</span><span class="boring">-                    + (j as f64) * self.pixel_delta_v;
+</span><span class="boring">-                let ray_direction = pixel_center - self.center;
+</span><span class="boring">-                let r = Ray::new(self.center, ray_direction);
+</span><span class="boring">-
+</span><span class="boring">-                let pixel_color = Self::ray_color(r, world);
+</span><span class="boring">-                write_color(std::io::stdout(), pixel_color)?;
+</span>+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
++                for _sample in 0..self.samples_per_pixel {
++                    let r = self.get_ray(i, j);
++                    pixel_color += Self::ray_color(r, world);
++                }
++                write_color(std::io::stdout(), self.pixel_samples_scale * pixel_color)?;
+             }
+         }
+         info!("Done.");
+ 
+         Ok(())
+     }
+ 
+     fn initialize(&amp;mut self) {
+         self.image_height = {
+             let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+             if image_height &lt; 1 { 1 } else { image_height }
+         };
+ 
++        self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
++
+         self.center = Point3::new(0.0, 0.0, 0.0);
+ 
+<span class="boring">         // Determine viewport dimensions.
+</span><span class="boring">         let focal_length = 1.0;
+</span><span class="boring">         let viewport_height = 2.0;
+</span><span class="boring">         let viewport_width =
+</span><span class="boring">             viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">         let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">         self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">         self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the location of the upper left pixel.
+</span><span class="boring">         let viewport_upper_left =
+</span><span class="boring">             self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span>     }
+ 
++    fn get_ray(&amp;self, i: i32, j: i32) -&gt; Ray {
++        // Construct a camera ray originating from the origin and directed at randomly sampled
++        // point around the pixel location i, j.
++
++        let offset = Self::sample_square();
++        let pixel_sample = self.pixel00_loc
++            + ((i as f64 + offset.x()) * self.pixel_delta_u)
++            + ((j as f64 + offset.y()) * self.pixel_delta_v);
++
++        let ray_origin = self.center;
++        let ray_direction = pixel_sample - ray_origin;
++
++        Ray::new(ray_origin, ray_direction)
++    }
++
++    fn sample_square() -&gt; Vec3 {
++        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
++        Vec3::new(
++            rand::random::&lt;f64&gt;() - 0.5,
++            rand::random::&lt;f64&gt;() - 0.5,
++            0.0,
++        )
++    }
++
+<span class="boring">+    fn _sample_disk(radius: f64) -&gt; Vec3 {
+</span><span class="boring">+        // Returns a random point in the unit (radius 0.5) disk centered at the origin.
+</span><span class="boring">+        radius * random_in_unit_disk()
+</span><span class="boring">+    }
+</span><span class="boring">+
+</span>     fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+<span class="boring">         if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+</span><span class="boring">             return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span><span class="boring">         }
+</span> 
+<span class="boring">         let unit_direction = unit_vector(r.direction());
+</span><span class="boring">         let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span>     }
+ }</code></pre>
+<p><strong>Listing 45:</strong> [<a href="https://github.com/goldnor/code/blob/8f64151623f1e58e249d00f11a8cac23523fec1b/src/camera.rs">camera.rs</a>] <em>Camera with samples-per-pixel parameter</em></p>
+<br>
+<p>(In addition to the new <code>sample_square()</code> function above, you'll also find the function <code>sample_disk()</code> in the Github source code. This is included in case you'd like to experiment with non-square pixels, but we won't be using it in this book. sample_disk() depends on the function random_in_unit_disk() which is defined later on.)</p>
+<p>Main is updated to set the new camera parameter.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 27377f1..9f08807 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,15 +1,16 @@
+</span><span class="boring"> use code::{camera::Camera, hittable_list::HittableList, prelude::*, sphere::Sphere};
+</span><span class="boring"> 
+</span> fn main() -&gt; std::io::Result&lt;()&gt; {
+<span class="boring">     let mut world = HittableList::new();
+</span><span class="boring"> 
+</span><span class="boring">     world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+</span><span class="boring">     world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span> 
+     Camera::default()
+         .with_aspect_ratio(16.0 / 9.0)
+         .with_image_width(400)
++        .with_samples_per_pixel(100)
+         .render(&amp;world)
+ }</code></pre>
+<p><strong>Listing 46:</strong> [<a href="https://github.com/goldnor/code/blob/d4b3a2498a7ed1a3a51ade2c425683a7ff4ad018/src/main.rs">main.rs</a>] <em>Setting the new samples-per-pixel parameter</em></p>
+<br>
+<p>Zooming into the image that is produced, we can see the difference in edge pixels.</p>
+<img style="width: 100%; image-rendering: pixelated" src="chapters/antialiasing/../../imgs/img-1.06-antialias-before-after.png" alt="Before and after antialiasing">
+<!-- ![x](../../imgs/img-1.06-antialias-before-after.png) -->
+<p><strong>Image 6:</strong> <em>Before and after antialiasing</em></p>
+<br>
+<hr>
+<ol class="footnote-definition"><li id="footnote-82a">
+<p>For this purpose, version 1.50 of Rust introduced the <code>f64::clamp(self, min, max)</code> <a href="https://doc.rust-lang.org/std/primitive.f64.html#method.clamp">function</a> (the C++17 standard introduced a similar <a href="https://en.cppreference.com/w/cpp/algorithm/clamp.html">function</a> called <code>std::clamp(v, lo, hi)</code>). <a href="#fr-82a-1">↩</a></p>
+</li>
+<li id="footnote-82b">
+<p>The function is const, meaning it can be used to initialise const variables. This will be demonstrated in the next listing. <a href="#fr-82b-1">↩</a></p>
+</li>
+</ol>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Adding a Progress Indicator - Ray Tracing in One Weekend (Rust)</title>
+        <title>Some Random Number Utilities - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,60 +168,66 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="adding-a-progress-indicator"><a class="header" href="#adding-a-progress-indicator">Adding a Progress Indicator</a></h2>
-<p>Before we continue, let's add a progress indicator to our output. This is a handy way to track the progress of a long render, and also to possibly identify a run that's stalled out due to an infinite loop or other problem.</p>
-<p>Our program outputs the image to the standard output stream (<code>std::cout</code>), so leave that alone and instead write to the logging output stream (<code>std::clog</code>):<sup class="footnote-reference" id="fr-23a-1"><a href="#footnote-23a">1</a></sup></p>
-<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index af636bc..00cad27 100644
-</span><span class="boring">--- a/src/main.rs
-</span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,26 +1,29 @@
-</span><span class="boring"> fn main() {
-</span><span class="boring">     // Image
-</span><span class="boring"> 
-</span><span class="boring">     const IMAGE_WIDTH: u32 = 256;
-</span><span class="boring">     const IMAGE_HEIGHT: u32 = 256;
-</span><span class="boring"> 
-</span><span class="boring">     // Render
-</span><span class="boring"> 
-</span>+    env_logger::init();
-     println!("P3");
-     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-     println!("255");
- 
-     for j in 0..IMAGE_HEIGHT {
-+        log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
-         for i in 0..IMAGE_WIDTH {
-             let r = i as f64 / (IMAGE_WIDTH - 1) as f64;
-             let g = j as f64 / (IMAGE_HEIGHT - 1) as f64;
-             let b = 0.0;
- 
-             let ir = (255.999 * r) as i32;
-             let ig = (255.999 * g) as i32;
-             let ib = (255.999 * b) as i32;
- 
-             println!("{ir} {ig} {ib}");
-         }
-     }
-+    log::info!("Done.");
-<span class="boring"> }</span></code></pre>
-<p><strong>Listing 3:</strong> [<a href="https://github.com/goldnor/code/blob/5c4dfec5c8122b0a6df768027866c4a526da8677/src/main.rs">main.rs</a>] <em>Main render loop with progress reporting</em></p>
-<br>
-<p>Now when running, you'll see a running count of the number of scanlines remaining. Hopefully this runs so fast that you don't even see it! Don't worry — you'll have lots of time in the future to watch a slowly updating progress line as we expand our ray tracer.</p>
+                        <h1 id="some-random-number-utilities-1"><a class="header" href="#some-random-number-utilities-1">Some Random Number Utilities <sup class="footnote-reference" id="fr-81a-1"><a href="#footnote-81a">1</a></sup></a></h1>
+<p>We're going to need a random number generator that returns real random numbers. This function should return a canonical random number, which by convention falls in the range \( 0 \le n &lt; 1 \). The “less than” before the \( 1 \) is important, as we will sometimes take advantage of that.</p>
+<p>A simple approach to this is to use the <code>std::rand()</code> function that can be found in <code>&lt;cstdlib&gt;</code>, which returns a random integer in the range <code>0</code> and <code>RAND_MAX</code>. Hence we can get a real random number as desired with the following code snippet, added to <code>rtweekend.h</code>:</p>
+<pre><code class="language-rust norun noplayground">// Utility Functions
+
+#[inline]
+pub fn degrees_to_radians(degrees: f64) -&gt; f64 {
+    degrees.to_radians()
+}
+
+#[inline]
+pub fn random_double() -&gt; f64 {
+    // Returns a random real in [0,1).
+    rand::random::&lt;i32&gt;() as f64 / (i32::MAX as f64 + 1.0)
+}
+
+#[inline]
+pub fn random_double_range(min: f64, max: f64) -&gt; f64 {
+    // Returns a random real in [min,max).
+    min + (max - min) * random_double()
+}</code></pre>
+<p><strong>Listing 41:</strong> [<a href="https://github.com/goldnor/code/blob/48d27302c1d726208b8f952050bcca45e53dc756/src/prelude.rs">prelude.rs</a>] <em>random_double() functions</em></p>
+<p>C++ did not traditionally have a standard random number generator, but newer versions of C++ have addressed this issue with the <code>&lt;random&gt;</code> header (if imperfectly according to some experts). <sup class="footnote-reference" id="fr-81b-1"><a href="#footnote-81b">2</a></sup> If you want to use this, you can obtain a random number with the conditions we need as follows:</p>
+<p><a name="l42"></a></p>
+<pre><code class="language-rust norun noplayground">// Utility Functions
+
+#[inline]
+pub fn degrees_to_radians(degrees: f64) -&gt; f64 {
+    degrees.to_radians()
+}
+
+#[inline]
+pub fn random_double() -&gt; f64 {
+    // Returns a random real in [0,1).
+    rand::random()
+}
+
+#[inline]
+pub fn random_double_range(min: f64, max: f64) -&gt; f64 {
+    // Returns a random real in [min,max).
+    rand::random_range(min..max)
+}</code></pre>
+<p><strong>Listing 42:</strong> [<a href="https://github.com/goldnor/code/blob/48d27302c1d726208b8f952050bcca45e53dc756/src/prelude.rs">prelude.rs</a>] <em>random_double() functions</em></p>
 <hr>
-<ol class="footnote-definition"><li id="footnote-23a">
-<p>The <a href="https://crates.io/crates/log">log crate</a> with the <a href="https://crates.io/crates/env_logger">env_logger</a> implementation is a good alternative to <code>std::clog</code>. Run <code>RUST_LOG=info cargo r &gt; image.ppm</code> for the log output. <a href="#fr-23a-1">↩</a></p>
+<ol class="footnote-definition"><li id="footnote-81a">
+<p>The utility functions, such as <code>degrees_to_radians</code>, were not mentioned in <a href="../surface_normals_and_multiple_objects/common_constants_and_utility_functions.html">chapter 6.7</a> since Rust already provides this functionality by default. The utility functions for randomness described in this chapter will also not be included in the code, as they only wrap functions implemented in the Rust <a href="https://crates.io/crates/rand">rand crate</a> (see <a href="#l42">listing 42</a>). <a href="#fr-81a-1">↩</a></p>
+</li>
+<li id="footnote-81b">
+<p>As far as I am aware, the Rust implementation is perfectly fine. <a href="#fr-81b-1">↩</a></p>
 </li>
 </ol>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/output_an_image/creating_an_image_file.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/antialiasing/antialiasing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/the_vec3_class/the_vec3_class.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/antialiasing/generating_pixels_with_multiple_samples.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -231,11 +237,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/output_an_image/creating_an_image_file.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/antialiasing/antialiasing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/the_vec3_class/the_vec3_class.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/antialiasing/generating_pixels_with_multiple_samples.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

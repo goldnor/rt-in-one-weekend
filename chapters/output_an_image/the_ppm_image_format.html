@@ -170,8 +170,9 @@
                     <main>
                         <h2 id="the-ppm-image-format"><a class="header" href="#the-ppm-image-format">The PPM Image Format</a></h2>
 <p>Whenever you start a renderer, you need a way to see an image. The most straightforward way is to write it to a file. The catch is, there are so many formats. Many of those are complex. I always start with a plain text ppm file. Here’s a nice description from Wikipedia:</p>
-<p><img src="../../imgs/fig-1.01-ppm.jpg" alt="PPM Example" />
-<strong>Figure 1:</strong> <em>PPM Example</em></p>
+<p><img src="../../imgs/fig-1.01-ppm.jpg" alt="PPM Example" /></p>
+<p><strong>Figure 1:</strong> <em>PPM Example</em></p>
+<br>
 <p>Let’s make some C++ code to output such a thing:<sup class="footnote-reference" id="fr-21a-1"><a href="#footnote-21a">1</a></sup></p>
 <pre><pre class="playground"><code class="language-rust">fn main() {
     // Image
@@ -199,7 +200,8 @@
         }
     }
 }</code></pre></pre>
-<p><strong>Listing 1:</strong> [<a href="TODO">main.rs</a>] <em>Creating your first image</em></p>
+<p><strong>Listing 1:</strong> [<a href="https://github.com/goldnor/code/blob/c2b88fe22dadf9cba6dff369ee0b1834dd9733d4/src/main.rs">main.rs</a>] <em>Creating your first image</em></p>
+<br>
 <p>There are some things to note in this code:</p>
 <ol>
 <li>The pixels are written out in rows.</li>

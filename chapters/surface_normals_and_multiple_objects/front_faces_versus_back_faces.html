@@ -294,7 +294,7 @@
 </span><span class="boring"> pub trait Hittable {
 </span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 19:</strong> [<a href="TODO">hittable.rs</a>] <em>Adding front-face tracking to hit_record</em></p>
+<p><strong>Listing 19:</strong> [<a href="https://github.com/goldnor/code/blob/a1c2d4fad73108c42bb6612c0bdb02d2a9c6a7ed/src/hittable.rs">hittable.rs</a>] <em>Adding front-face tracking to hit_record</em></p>
 <br>
 <p>And then we add the surface side determination to the class:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
@@ -361,7 +361,7 @@
          Some(rec)
      }
  }</code></pre>
-<p><strong>Listing 20:</strong> [<a href="TODO">sphere.rs</a>] <em>The sphere class with normal determination</em></p>
+<p><strong>Listing 20:</strong> [<a href="https://github.com/goldnor/code/blob/e54430867656af9ca129dfd3350fe4f0ead18d19/src/sphere.rs">sphere.rs</a>] <em>The sphere class with normal determination</em></p>
 <br>
 
                     </main>

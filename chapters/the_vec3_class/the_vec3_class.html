@@ -347,7 +347,8 @@ pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
 pub fn unit_vector(v: Vec3) -&gt; Vec3 {
     v / v.length()
 }</code></pre>
-<p><strong>Listing 4:</strong> [<a href="TODO">vec3.rs</a>] <em>vec3 definitions and helper functions</em></p>
+<p><strong>Listing 4:</strong> [<a href="https://github.com/goldnor/code/blob/400e8e91847d5b2fbde6eb17432cbbe49794e28d/src/vec3.rs">vec3.rs</a>] <em>vec3 definitions and helper functions</em></p>
+<br>
 <p>We use double here, but some ray tracers use float. double has greater precision and range, but is twice the size compared to float. This increase in size may be important if you're programming in limited memory conditions (such as hardware shaders). Either one is fine — follow your own tastes.</p>
 <hr>
 <ol class="footnote-definition"><li id="footnote-3a">

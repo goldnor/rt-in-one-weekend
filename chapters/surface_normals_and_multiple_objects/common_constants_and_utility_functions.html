@@ -184,11 +184,11 @@ pub const PI: f64 = std::f64::consts::PI;
 // Common Headers
 
 pub use crate::{color::*, ray::*, vec3::*};</code></pre>
-<p><strong>Listing 24:</strong> [<a href="TODO">prelude.rs</a>] <em>The rtweekend.h common header</em></p>
+<p><strong>Listing 24:</strong> [<a href="https://github.com/goldnor/code/blob/9e1b0c216e67d1bcf41de6ee6c449758c9cc33e5/src/prelude.rs">prelude.rs</a>] <em>The rtweekend.h common header</em></p>
 <br>
 <p>Program files will include <code>rtweekend.h</code> first, so all other header files (where the bulk of our code will reside) can implicitly assume that <code>rtweekend.h</code> has already been included. Header files still need to explicitly include any other necessary header files. We'll make some updates with these assumptions in mind.</p>
 <pre><code class="language-rust norun noplayground">// nothing changes</code></pre>
-<p><strong>Listing 25:</strong> [<a href="TODO">color.rs</a>] <em>Assume rtweekend.h inclusion for color.h</em> <sup class="footnote-reference" id="fr-67b-1"><a href="#footnote-67b">2</a></sup></p>
+<p><strong>Listing 25:</strong> [<a href="https://github.com/goldnor/code/blob/9e1b0c216e67d1bcf41de6ee6c449758c9cc33e5/src/color.rs">color.rs</a>] <em>Assume rtweekend.h inclusion for color.h</em> <sup class="footnote-reference" id="fr-67b-1"><a href="#footnote-67b">2</a></sup></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
 </span><span class="boring">index 8ced826..a7aab5a 100644
@@ -226,7 +226,7 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
 </span><span class="boring"> pub trait Hittable {
 </span><span class="boring">     fn hit(&amp;self, r: Ray, ray_tmin: f64, ray_tmax: f64) -&gt; Option&lt;HitRecord&gt;;
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 26:</strong> [<a href="TODO">hittable.rs</a>] <em>Assume rtweekend.h inclusion for hittable.h</em></p>
+<p><strong>Listing 26:</strong> [<a href="https://github.com/goldnor/code/blob/a83dfcb94c1741454b03fe57b8dc56e97a47c0cc/src/hittable.rs">hittable.rs</a>] <em>Assume rtweekend.h inclusion for hittable.h</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable_list.rs b/src/hittable_list.rs
 </span><span class="boring">index 95c24e4..7841161 100644
@@ -268,7 +268,7 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
 </span><span class="boring">             .min_by(|a, b| a.t.partial_cmp(&amp;b.t).expect("no NaN value"))
 </span><span class="boring">     }
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 27:</strong> [<a href="TODO">hittable_list.rs</a>] <em>Assume rtweekend.h inclusion for hittable_list.h</em></p>
+<p><strong>Listing 27:</strong> [<a href="https://github.com/goldnor/code/blob/fd505c6bc51cd1887e71b1ce44fe0ee32a1fb198/src/hittable_list.rs">hittable_list.rs</a>] <em>Assume rtweekend.h inclusion for hittable_list.h</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
 </span><span class="boring">index 86d3cbb..9de9f72 100644
@@ -333,10 +333,10 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
 </span><span class="boring">         Some(rec)
 </span><span class="boring">     }
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 28:</strong> [<a href="TODO">sphere.rs</a>] <em>Assume rtweekend.h inclusion for sphere.h</em></p>
+<p><strong>Listing 28:</strong> [<a href="https://github.com/goldnor/code/blob/d57e0ab6d5de95b5d3105a150a69c552e4eeb167/src/sphere.rs">sphere.rs</a>] <em>Assume rtweekend.h inclusion for sphere.h</em></p>
 <br>
 <pre><code class="language-rust-diff norun noplayground">// nothing changes</code></pre>
-<p><strong>Listing 29:</strong> [<a href="TODO">vec3.rs</a>] <em>Assume rtweekend.h inclusion for vec3.h</em></p>
+<p><strong>Listing 29:</strong> [<a href="https://github.com/goldnor/code/blob/d57e0ab6d5de95b5d3105a150a69c552e4eeb167/src/vec3.rs">vec3.rs</a>] <em>Assume rtweekend.h inclusion for vec3.h</em></p>
 <br>
 <p>And now the new main:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
@@ -440,7 +440,7 @@ pub use crate::{color::*, ray::*, vec3::*};</code></pre>
  
      Ok(())
  }</code></pre>
-<p><strong>Listing 30:</strong> [<a href="TODO">main.rs</a>] <em>The new main with hittables</em></p>
+<p><strong>Listing 30:</strong> [<a href="https://github.com/goldnor/code/blob/e19dd26432882f6c779f25632318690a3be5a4ac/src/main.rs">main.rs</a>] <em>The new main with hittables</em></p>
 <br>
 <p>This yields a picture that is really just a visualization of where the spheres are located along with their surface normal. This is often a great way to view any flaws or specific characteristics of a geometric model.</p>
 <img style="width: 100%" src="../../imgs/img-1.05-normals-sphere-ground.png" alt=" Resulting render of normals-colored sphere with ground">
