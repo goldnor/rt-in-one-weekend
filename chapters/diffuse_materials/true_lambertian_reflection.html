@@ -1,0 +1,416 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>True Lambertian Reflection - Ray Tracing in One Weekend (Rust)</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="true-lambertian-reflection"><a class="header" href="#true-lambertian-reflection">True Lambertian Reflection</a></h2>
+<p>Scattering reflected rays evenly about the hemisphere produces a nice soft diffuse model, but we can definitely do better. A more accurate representation of real diffuse objects is the <em>Lambertian</em> distribution. This distribution scatters reflected rays in a manner that is proportional to \( cos(\phi) \), where \( \phi \) is the angle between the reflected ray and the surface normal. This means that a reflected ray is most likely to scatter in a direction near the surface normal, and less likely to scatter in directions away from the normal. This non-uniform Lambertian distribution does a better job of modeling material reflection in the real world than our previous uniform scattering.</p>
+<p>We can create this distribution by adding a random unit vector to the normal vector. At the point of intersection on a surface there is the hit point, \( \mathbf{p} \), and there is the normal of the surface, \( \mathbf{n} \). At the point of intersection, this surface has exactly two sides, so there can only be two unique unit spheres tangent to any intersection point (one unique sphere for each side of the surface). These two unit spheres will be displaced from the surface by the length of their radius, which is exactly one for a unit sphere.</p>
+<p>One sphere will be displaced in the direction of the surface's normal (\( \mathbf{n} \)) and one sphere will be displaced in the opposite direction (\( -\mathbf{n} \)). This leaves us with two spheres of unit size that will only be just touching the surface at the intersection point. From this, one of the spheres will have its center at \( (\mathbf{P} + \mathbf{n}) \) and the other sphere will have its center at \( (\mathbf{P} - \mathbf{n}) \). The sphere with a center at \( (\mathbf{P} - \mathbf{n}) \) is considered inside the surface, whereas the sphere with center \( (\mathbf{P} + \mathbf{n}) \) is considered outside the surface.</p>
+<p>We want to select the tangent unit sphere that is on the same side of the surface as the ray origin. Pick a random point \( \mathbf{S} \) on this unit radius sphere and send a ray from the hit point \( \mathbf{P} \) to the random point \( \mathbf{S} \) (this is the vector \( (\mathbf{S} - \mathbf{P}) \):</p>
+<p><img src="../../imgs/fig-1.14-rand-unitvec.jpg" alt="Randomly generating a vector according to Lambertian distribution" /></p>
+<p><strong>Figure 14:</strong> <em>Randomly generating a vector according to Lambertian distribution</em></p>
+<br>
+<p>The change is actually fairly minimal:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/camera.rs b/src/camera.rs
+</span><span class="boring">index eea2b1f..3a2e772 100644
+</span><span class="boring">--- a/src/camera.rs
+</span><span class="boring">+++ b/src/camera.rs
+</span><span class="boring">@@ -1,166 +1,166 @@
+</span><span class="boring"> use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring"> 
+</span><span class="boring"> pub struct Camera {
+</span><span class="boring">     /// Ratio of image width over height
+</span><span class="boring">     pub aspect_ratio: f64,
+</span><span class="boring">     /// Rendered image width in pixel count
+</span><span class="boring">     pub image_width: i32,
+</span><span class="boring">     // Count of random samples for each pixel
+</span><span class="boring">     pub samples_per_pixel: i32,
+</span><span class="boring">     // Maximum number of ray bounces into scene
+</span><span class="boring">     pub max_depth: i32,
+</span><span class="boring"> 
+</span><span class="boring">     /// Rendered image height
+</span><span class="boring">     image_height: i32,
+</span><span class="boring">     // Color scale factor for a sum of pixel samples
+</span><span class="boring">     pixel_samples_scale: f64,
+</span><span class="boring">     /// Camera center
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     /// Location of pixel 0, 0
+</span><span class="boring">     pixel00_loc: Point3,
+</span><span class="boring">     /// Offset to pixel to the right
+</span><span class="boring">     pixel_delta_u: Vec3,
+</span><span class="boring">     /// Offset to pixel below
+</span><span class="boring">     pixel_delta_v: Vec3,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Default for Camera {
+</span><span class="boring">     fn default() -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             aspect_ratio: 1.0,
+</span><span class="boring">             image_width: 100,
+</span><span class="boring">             samples_per_pixel: 10,
+</span><span class="boring">             max_depth: 10,
+</span><span class="boring">             image_height: Default::default(),
+</span><span class="boring">             pixel_samples_scale: Default::default(),
+</span><span class="boring">             center: Default::default(),
+</span><span class="boring">             pixel00_loc: Default::default(),
+</span><span class="boring">             pixel_delta_u: Default::default(),
+</span><span class="boring">             pixel_delta_v: Default::default(),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Camera {
+<span class="boring">     pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+</span><span class="boring">         self.aspect_ratio = aspect_ratio;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+</span><span class="boring">         self.image_width = image_width;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_samples_per_pixel(mut self, samples_per_pixel: i32) -&gt; Self {
+</span><span class="boring">         self.samples_per_pixel = samples_per_pixel;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_max_depth(mut self, max_depth: i32) -&gt; Self {
+</span><span class="boring">         self.max_depth = max_depth;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">         self.initialize();
+</span><span class="boring"> 
+</span><span class="boring">         println!("P3");
+</span><span class="boring">         println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">         println!("255");
+</span><span class="boring"> 
+</span><span class="boring">         for j in 0..self.image_height {
+</span><span class="boring">             info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">             for i in 0..self.image_width {
+</span><span class="boring">                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+</span><span class="boring">                 for _sample in 0..self.samples_per_pixel {
+</span><span class="boring">                     let r = self.get_ray(i, j);
+</span><span class="boring">                     pixel_color += Self::ray_color(r, self.max_depth, world);
+</span><span class="boring">                 }
+</span><span class="boring">                 write_color(std::io::stdout(), self.pixel_samples_scale * pixel_color)?;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span><span class="boring">         info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">         Ok(())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn initialize(&amp;mut self) {
+</span><span class="boring">         self.image_height = {
+</span><span class="boring">             let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">             if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">         };
+</span><span class="boring"> 
+</span><span class="boring">         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+</span><span class="boring"> 
+</span><span class="boring">         self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">         // Determine viewport dimensions.
+</span><span class="boring">         let focal_length = 1.0;
+</span><span class="boring">         let viewport_height = 2.0;
+</span><span class="boring">         let viewport_width =
+</span><span class="boring">             viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">         let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">         self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">         self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the location of the upper left pixel.
+</span><span class="boring">         let viewport_upper_left =
+</span><span class="boring">             self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn get_ray(&amp;self, i: i32, j: i32) -&gt; Ray {
+</span><span class="boring">         // Construct a camera ray originating from the origin and directed at randomly sampled
+</span><span class="boring">         // point around the pixel location i, j.
+</span><span class="boring"> 
+</span><span class="boring">         let offset = Self::sample_square();
+</span><span class="boring">         let pixel_sample = self.pixel00_loc
+</span><span class="boring">             + ((i as f64 + offset.x()) * self.pixel_delta_u)
+</span><span class="boring">             + ((j as f64 + offset.y()) * self.pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">         let ray_origin = self.center;
+</span><span class="boring">         let ray_direction = pixel_sample - ray_origin;
+</span><span class="boring"> 
+</span><span class="boring">         Ray::new(ray_origin, ray_direction)
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn sample_square() -&gt; Vec3 {
+</span><span class="boring">         // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             0.0,
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn _sample_disk(radius: f64) -&gt; Vec3 {
+</span><span class="boring">         // Returns a random point in the unit (radius 0.5) disk centered at the origin.
+</span><span class="boring">         radius * random_in_unit_disk()
+</span><span class="boring">     }
+</span> 
+     fn ray_color(r: Ray, depth: i32, world: &amp;impl Hittable) -&gt; Color {
+         // If we've exceeded the ray bounce limit, no more light is gathered.
+         if depth &lt;= 0 {
+             return Color::new(0.0, 0.0, 0.0);
+         }
+ 
+         if let Some(rec) = world.hit(r, Interval::new(0.001, INFINITY)) {
+<span class="boring">-            let direction = random_on_hemisphere(rec.normal);
+</span>+            let direction = rec.normal + random_unit_vector();
+             return 0.5 * Self::ray_color(Ray::new(rec.p, direction), depth - 1, world);
+         }
+ 
+         let unit_direction = unit_vector(r.direction());
+         let a = 0.5 * (unit_direction.y() + 1.0);
+         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+     }
+ }</code></pre>
+<p><strong>Listing 55:</strong> [<a href="https://github.com/goldnor/code/blob/2b7ff0c812b41279018742c656ee5fa894bf50c3/src/camera.rs">camera.rs</a>] <em>ray_color() with replacement diffuse</em></p>
+<br>
+<p>After rendering we get a similar image:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.10-correct-lambertian.png" alt="Correct rendering of Lambertian spheres">
+<p><strong>Image 10:</strong> <em>Correct rendering of Lambertian spheres</em></p>
+<br>
+<p>It's hard to tell the difference between these two diffuse methods, given that our scene of two spheres is so simple, but you should be able to notice two important visual differences:</p>
+<ol>
+<li>The shadows are more pronounced after the change</li>
+<li>Both spheres are tinted blue from the sky after the change</li>
+</ol>
+<p>Both of these changes are due to the less uniform scattering of the light rays—more rays are scattering toward the normal. This means that for diffuse objects, they will appear <em>darker</em> because less light bounces toward the camera. For the shadows, more light bounces straight-up, so the area underneath the sphere is darker.</p>
+<p>Not a lot of common, everyday objects are perfectly diffuse, so our visual intuition of how these objects behave under light can be poorly formed. As scenes become more complicated over the course of the book, you are encouraged to switch between the different diffuse renderers presented here. Most scenes of interest will contain a large amount of diffuse materials. You can gain valuable insight by understanding the effect of different diffuse methods on the lighting of a scene.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../chapters/diffuse_materials/fixing_shadow_acne.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../chapters/diffuse_materials/using_gamma_correction_for_accurate_color_intensity.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../chapters/diffuse_materials/fixing_shadow_acne.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../chapters/diffuse_materials/using_gamma_correction_for_accurate_color_intensity.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

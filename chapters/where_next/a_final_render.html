@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Creating Our First Raytraced Image - Ray Tracing in One Weekend (Rust)</title>
+        <title>A Final Render - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,111 +168,147 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
-<p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
+                        <h2 id="a-final-render"><a class="header" href="#a-final-render">A Final Render</a></h2>
+<p>Let’s make the image on the cover of this book — lots of random spheres.</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index f31dc16..e3d9091 100644
+</span><span class="boring">index 51d420b..54ff4ef 100644
 </span><span class="boring">--- a/src/main.rs
 </span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,67 +1,81 @@
-</span> use code::{
-     color::{Color, write_color},
-     ray::Ray,
-<span class="boring">-    vec3::{Point3, Vec3, unit_vector},
-</span>+    vec3::{Point3, Vec3, dot, unit_vector},
- };
+</span><span class="boring">@@ -1,58 +1,86 @@
+</span><span class="boring"> use code::{
+</span><span class="boring">     camera::Camera,
+</span><span class="boring">     hittable_list::HittableList,
+</span><span class="boring">-    material::{Dielectric, Lambertian, Metal},
+</span><span class="boring">+    material::{Dielectric, Lambertian, Material, Metal},
+</span><span class="boring">     prelude::*,
+</span><span class="boring">     sphere::Sphere,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span> fn main() -&gt; std::io::Result&lt;()&gt; {
+     let mut world = HittableList::new();
  
-+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
-+    let oc = center - r.origin();
-+    let a = dot(r.direction(), r.direction());
-+    let b = -2.0 * dot(r.direction(), oc);
-+    let c = dot(oc, oc) - radius * radius;
-+    let discriminant = b * b - 4.0 * a * c;
+<span class="boring">-    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+</span><span class="boring">-    let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+</span><span class="boring">-    let material_left = Rc::new(Dielectric::new(1.5));
+</span><span class="boring">-    let material_bubble = Rc::new(Dielectric::new(1.0 / 1.5));
+</span><span class="boring">-    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+</span><span class="boring">-
+</span><span class="boring">-    world.add(Rc::new(Sphere::new(
+</span><span class="boring">-        Point3::new(0.0, -100.5, -1.0),
+</span><span class="boring">-        100.0,
+</span><span class="boring">-        material_ground,
+</span><span class="boring">-    )));
+</span>+    let ground_material = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+     world.add(Rc::new(Sphere::new(
+<span class="boring">-        Point3::new(0.0, 0.0, -1.2),
+</span><span class="boring">-        0.5,
+</span><span class="boring">-        material_center,
+</span>+        Point3::new(0.0, -1000.0, 0.0),
++        1000.0,
++        ground_material,
+     )));
 +
-+    discriminant &gt;= 0.0
-+}
++    for a in -11..11 {
++        for b in -11..11 {
++            let choose_mat: f64 = rand::random();
++            let center = Point3::new(
++                a as f64 + 0.9 * rand::random::&lt;f64&gt;(),
++                0.2,
++                b as f64 + 0.9 * rand::random::&lt;f64&gt;(),
++            );
 +
- fn ray_color(r: Ray) -&gt; Color {
-+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-+        return Color::new(1.0, 0.0, 0.0);
++            if (center - Point3::new(4.0, 0.2, 0.0)).length() &gt; 0.9 {
++                let sphere_material: Rc&lt;dyn Material&gt; = if choose_mat &lt; 0.8 {
++                    // diffuse
++                    let albedo = Color::random() * Color::random();
++
++                    Rc::new(Lambertian::new(albedo))
++                } else if choose_mat &lt; 0.95 {
++                    // metal
++                    let albedo = Color::random_range(0.5, 1.0);
++                    let fuzz = rand::random_range(0.0..0.5);
++
++                    Rc::new(Metal::new(albedo, fuzz))
++                } else {
++                    // glass
++
++                    Rc::new(Dielectric::new(1.5))
++                };
++
++                world.add(Rc::new(Sphere::new(center, 0.2, sphere_material)));
++            }
++        }
 +    }
 +
-     let unit_direction = unit_vector(r.direction());
-     let a = 0.5 * (unit_direction.y() + 1.0);
-     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
- }
-<span class="boring"> 
-</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-</span><span class="boring">     // Image
-</span><span class="boring"> 
-</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
-</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
-</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
-</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
-</span><span class="boring">     };
-</span><span class="boring"> 
-</span><span class="boring">     // Camera
-</span><span class="boring"> 
-</span><span class="boring">     let focal_length = 1.0;
-</span><span class="boring">     let viewport_height = 2.0;
-</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
-</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
-</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
-</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the location of the upper left pixel.
-</span><span class="boring">     let viewport_upper_left =
-</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-</span><span class="boring"> 
-</span><span class="boring">     // Render
-</span><span class="boring"> 
-</span><span class="boring">     env_logger::init();
-</span><span class="boring">     println!("P3");
-</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-</span><span class="boring">     println!("255");
-</span><span class="boring"> 
-</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
-</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
-</span><span class="boring">         for i in 0..IMAGE_WIDTH {
-</span><span class="boring">             let pixel_center =
-</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
-</span><span class="boring">             let ray_direction = pixel_center - camera_center;
-</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
-</span><span class="boring"> 
-</span><span class="boring">             let pixel_color = ray_color(r);
-</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
-</span><span class="boring">         }
-</span><span class="boring">     }
-</span><span class="boring">     log::info!("Done.");
-</span><span class="boring"> 
-</span><span class="boring">     Ok(())
-</span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 11:</strong> [<a href="https://github.com/goldnor/code/blob/2cf21871a39a309bce0edfb75464389bba9782f4/src/main.rs">main.rs</a>] <em>Rendering a red sphere</em></p>
++    let material1 = Rc::new(Dielectric::new(1.5));
+     world.add(Rc::new(Sphere::new(
+<span class="boring">-        Point3::new(-1.0, 0.0, -1.0),
+</span><span class="boring">-        0.5,
+</span><span class="boring">-        material_left,
+</span>+        Point3::new(0.0, 1.0, 0.0),
++        1.0,
++        material1,
+     )));
++
++    let material2 = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+     world.add(Rc::new(Sphere::new(
+<span class="boring">-        Point3::new(-1.0, 0.0, -1.0),
+</span><span class="boring">-        0.4,
+</span><span class="boring">-        material_bubble,
+</span>+        Point3::new(-4.0, 1.0, 0.0),
++        1.0,
++        material2,
+     )));
++
++    let material3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
+     world.add(Rc::new(Sphere::new(
+<span class="boring">-        Point3::new(1.0, 0.0, -1.0),
+</span><span class="boring">-        0.5,
+</span><span class="boring">-        material_right,
+</span>+        Point3::new(4.0, 1.0, 0.0),
++        1.0,
++        material3,
+     )));
+ 
+     env_logger::init();
+ 
+     Camera::default()
+         .with_aspect_ratio(16.0 / 9.0)
+<span class="boring">-        .with_image_width(400)
+</span><span class="boring">-        .with_samples_per_pixel(100)
+</span>+        .with_image_width(1200)
++        .with_samples_per_pixel(500)
+         .with_max_depth(50)
+         .with_vfov(20.0)
+<span class="boring">-        .with_lookfrom(Point3::new(-2.0, 2.0, 1.0))
+</span><span class="boring">-        .with_lookat(Point3::new(0.0, 0.0, -1.0))
+</span>+        .with_lookfrom(Point3::new(13.0, 2.0, 3.0))
++        .with_lookat(Point3::new(0.0, 0.0, 0.0))
+         .with_vup(Point3::new(0.0, 1.0, 0.0))
+<span class="boring">-        .with_defocus_angle(10.0)
+</span><span class="boring">-        .with_focus_dist(3.4)
+</span>+        .with_defocus_angle(0.6)
++        .with_focus_dist(10.0)
+         .render(&amp;world)
+ }</code></pre>
+<p><strong>Listing 88:</strong> [<a href="">main.rs</a>] <em>Final scene</em></p>
 <br>
-<p>What we get is this:</p>
-<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
-<p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+<p>(Note that the code above differs slightly from the project sample code: the <code>samples_per_pixel</code> is set to 500 above for a high-quality image that will take quite a while to render. The project source code uses a value of 10 in the interest of reasonable run times while developing and validating.)</p>
+<p>This gives:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.23-book1-final.jpg" alt="Final scene">
+<p><strong>Image 23:</strong> <em>Final scene</em></p>
 <br>
+<p>An interesting thing you might note is the glass balls don’t really have shadows which makes them look like they are floating. This is not a bug — you don’t see glass balls much in real life, where they also look a bit strange, and indeed seem to float on cloudy days. A point on the big sphere under a glass ball still has lots of light hitting it because the sky is re-ordered rather than blocked.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/defocus_blur/generating_sample_rays.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/where_next/next_steps.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -282,11 +318,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/defocus_blur/generating_sample_rays.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/where_next/next_steps.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

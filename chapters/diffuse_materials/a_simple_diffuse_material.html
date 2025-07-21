@@ -1,0 +1,1299 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>A Simple Diffuse Material - Ray Tracing in One Weekend (Rust)</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="a-simple-diffuse-material"><a class="header" href="#a-simple-diffuse-material">A Simple Diffuse Material</a></h2>
+<p>Diffuse objects that don’t emit their own light merely take on the color of their surroundings, but they do modulate that with their own intrinsic color. Light that reflects off a diffuse surface has its direction randomized, so, if we send three rays into a crack between two diffuse surfaces they will each have different random behavior:</p>
+<p><img src="../../imgs/fig-1.09-light-bounce.jpg" alt="Light ray bounces" /></p>
+<p><strong>Figure 9:</strong> <em>Light ray bounces</em></p>
+<br>
+<p>They might also be absorbed rather than reflected. The darker the surface, the more likely the ray is absorbed (that’s why it's dark!). Really any algorithm that randomizes direction will produce surfaces that look matte. Let's start with the most intuitive: a surface that randomly bounces a ray equally in all directions. For this material, a ray that hits the surface has an equal probability of bouncing in any direction away from the surface.</p>
+<p><img src="../../imgs/fig-1.10-random-vec-horizon.jpg" alt="Equal reflection above the horizon" /></p>
+<p><strong>Figure 10:</strong> <em>Equal reflection above the horizon</em></p>
+<br>
+<p>This very intuitive material is the simplest kind of diffuse and — indeed — many of the first raytracing papers used this diffuse method (before adopting a more accurate method that we'll be implementing a little bit later). We don't currently have a way to randomly reflect a ray, so we'll need to add a few functions to our vector utility header. The first thing we need is the ability to generate arbitrary random vectors:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/vec3.rs b/src/vec3.rs
+</span><span class="boring">index d4352e1..f9228ac 100644
+</span><span class="boring">--- a/src/vec3.rs
+</span><span class="boring">+++ b/src/vec3.rs
+</span><span class="boring">@@ -1,190 +1,202 @@
+</span><span class="boring"> use std::{
+</span><span class="boring">     fmt::Display,
+</span><span class="boring">     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Vec3 {
+</span><span class="boring">     pub e: [f64; 3],
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> pub type Point3 = Vec3;
+</span><span class="boring"> 
+</span> impl Vec3 {
+<span class="boring">     pub fn new(e0: f64, e1: f64, e2: f64) -&gt; Self {
+</span><span class="boring">         Self { e: [e0, e1, e2] }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn x(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn y(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[1]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn z(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length(&amp;self) -&gt; f64 {
+</span><span class="boring">         f64::sqrt(self.length_squared())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length_squared(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+</span><span class="boring">     }
+</span>+
++    pub fn random() -&gt; Self {
++        Vec3 { e: rand::random() }
++    }
++
++    pub fn random_range(min: f64, max: f64) -&gt; Self {
++        Vec3::new(
++            rand::random_range(min..max),
++            rand::random_range(min..max),
++            rand::random_range(min..max),
++        )
++    }
+ }
+ 
+<span class="boring"> impl Neg for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn neg(self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: self.e.map(|e| -e),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Index&lt;usize&gt; for Vec3 {
+</span><span class="boring">     type Output = f64;
+</span><span class="boring"> 
+</span><span class="boring">     fn index(&amp;self, index: usize) -&gt; &amp;Self::Output {
+</span><span class="boring">         &amp;self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl IndexMut&lt;usize&gt; for Vec3 {
+</span><span class="boring">     fn index_mut(&amp;mut self, index: usize) -&gt; &amp;mut Self::Output {
+</span><span class="boring">         &amp;mut self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl AddAssign for Vec3 {
+</span><span class="boring">     fn add_assign(&amp;mut self, rhs: Self) {
+</span><span class="boring">         self.e[0] += rhs.e[0];
+</span><span class="boring">         self.e[1] += rhs.e[1];
+</span><span class="boring">         self.e[2] += rhs.e[2];
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl MulAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn mul_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.e[0] *= rhs;
+</span><span class="boring">         self.e[1] *= rhs;
+</span><span class="boring">         self.e[2] *= rhs;
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl DivAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn div_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.mul_assign(1.0 / rhs);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Display for Vec3 {
+</span><span class="boring">     fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">         write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Add for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn add(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] + rhs.e[0],
+</span><span class="boring">                 self.e[1] + rhs.e[1],
+</span><span class="boring">                 self.e[2] + rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sub for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn sub(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] - rhs.e[0],
+</span><span class="boring">                 self.e[1] - rhs.e[1],
+</span><span class="boring">                 self.e[2] - rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] * rhs.e[0],
+</span><span class="boring">                 self.e[1] * rhs.e[1],
+</span><span class="boring">                 self.e[2] * rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;Vec3&gt; for f64 {
+</span><span class="boring">     type Output = Vec3;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Vec3) -&gt; Self::Output {
+</span><span class="boring">         rhs.mul(self)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Div&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn div(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         self * (1.0 / rhs)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn dot(u: Vec3, v: Vec3) -&gt; f64 {
+</span><span class="boring">     u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     Vec3::new(
+</span><span class="boring">         u.e[1] * v.e[2] - u.e[2] * v.e[1],
+</span><span class="boring">         u.e[2] * v.e[0] - u.e[0] * v.e[2],
+</span><span class="boring">         u.e[0] * v.e[1] - u.e[1] * v.e[0],
+</span><span class="boring">     )
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn unit_vector(v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     v / v.length()
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn random_in_unit_disk() -&gt; Vec3 {
+</span><span class="boring">     loop {
+</span><span class="boring">         let p = Vec3::new(
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             0.0,
+</span><span class="boring">         );
+</span><span class="boring">         if p.length_squared() &lt; 1.0 {
+</span><span class="boring">             return p;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 47:</strong> [<a href="https://github.com/goldnor/code/blob/e486826f6cf6e4b50e5ac2f23f9797ae39c3f99d/src/vec3.rs">vec3.rs</a>] <em>vec3 random utility functions</em></p>
+<br>
+<p>Then we need to figure out how to manipulate a random vector so that we only get results that are on the surface of a hemisphere. There are analytical methods of doing this, but they are actually surprisingly complicated to understand, and quite a bit complicated to implement. Instead, we'll use what is typically the easiest algorithm: A rejection method. A rejection method works by repeatedly generating random samples until we produce a sample that meets the desired criteria. In other words, keep rejecting bad samples until you find a good one.</p>
+<p>There are many equally valid ways of generating a random vector on a hemisphere using the rejection method, but for our purposes we will go with the simplest, which is:</p>
+<ol>
+<li>Generate a random vector inside the unit sphere</li>
+<li>Normalize this vector to extend it to the sphere surface</li>
+<li>Invert the normalized vector if it falls onto the wrong hemisphere</li>
+</ol>
+<p>First, we will use a rejection method to generate the random vector inside the unit sphere (that is, a sphere of radius \( 1 \)). Pick a random point inside the cube enclosing the unit sphere (that is, where \( 𝑥 \), \( 𝑦 \), and \( 𝑧 \) are all in the range \( [−1,+1] \)). If this point lies outside the unit sphere, then generate a new one until we find one that lies inside or on the unit sphere.</p>
+<p><img src="../../imgs/fig-1.11-sphere-vec.jpg" alt="Two vectors were rejected before finding a good one (pre-normalization)" /></p>
+<p><strong>Figure 11:</strong> <em>Two vectors were rejected before finding a good one (pre-normalization)</em></p>
+<br>
+<p><img src="../../imgs/fig-1.12-sphere-unit-vec.jpg" alt="The accepted random vector is normalized to produce a unit vector" /></p>
+<p><strong>Figure 12:</strong> <em>The accepted random vector is normalized to produce a unit vector</em></p>
+<br>
+<p>Here's our first draft of the function:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/vec3.rs b/src/vec3.rs
+</span><span class="boring">index f9228ac..e3ee3ea 100644
+</span><span class="boring">--- a/src/vec3.rs
+</span><span class="boring">+++ b/src/vec3.rs
+</span><span class="boring">@@ -1,202 +1,213 @@
+</span><span class="boring"> use std::{
+</span><span class="boring">     fmt::Display,
+</span><span class="boring">     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Vec3 {
+</span><span class="boring">     pub e: [f64; 3],
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> pub type Point3 = Vec3;
+</span><span class="boring"> 
+</span><span class="boring"> impl Vec3 {
+</span><span class="boring">     pub fn new(e0: f64, e1: f64, e2: f64) -&gt; Self {
+</span><span class="boring">         Self { e: [e0, e1, e2] }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn x(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn y(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[1]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn z(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length(&amp;self) -&gt; f64 {
+</span><span class="boring">         f64::sqrt(self.length_squared())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length_squared(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn random() -&gt; Self {
+</span><span class="boring">         Vec3 { e: rand::random() }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn random_range(min: f64, max: f64) -&gt; Self {
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Neg for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn neg(self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: self.e.map(|e| -e),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Index&lt;usize&gt; for Vec3 {
+</span><span class="boring">     type Output = f64;
+</span><span class="boring"> 
+</span><span class="boring">     fn index(&amp;self, index: usize) -&gt; &amp;Self::Output {
+</span><span class="boring">         &amp;self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl IndexMut&lt;usize&gt; for Vec3 {
+</span><span class="boring">     fn index_mut(&amp;mut self, index: usize) -&gt; &amp;mut Self::Output {
+</span><span class="boring">         &amp;mut self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl AddAssign for Vec3 {
+</span><span class="boring">     fn add_assign(&amp;mut self, rhs: Self) {
+</span><span class="boring">         self.e[0] += rhs.e[0];
+</span><span class="boring">         self.e[1] += rhs.e[1];
+</span><span class="boring">         self.e[2] += rhs.e[2];
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl MulAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn mul_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.e[0] *= rhs;
+</span><span class="boring">         self.e[1] *= rhs;
+</span><span class="boring">         self.e[2] *= rhs;
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl DivAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn div_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.mul_assign(1.0 / rhs);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Display for Vec3 {
+</span><span class="boring">     fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">         write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Add for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn add(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] + rhs.e[0],
+</span><span class="boring">                 self.e[1] + rhs.e[1],
+</span><span class="boring">                 self.e[2] + rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sub for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn sub(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] - rhs.e[0],
+</span><span class="boring">                 self.e[1] - rhs.e[1],
+</span><span class="boring">                 self.e[2] - rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] * rhs.e[0],
+</span><span class="boring">                 self.e[1] * rhs.e[1],
+</span><span class="boring">                 self.e[2] * rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;Vec3&gt; for f64 {
+</span><span class="boring">     type Output = Vec3;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Vec3) -&gt; Self::Output {
+</span><span class="boring">         rhs.mul(self)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Div&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn div(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         self * (1.0 / rhs)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn dot(u: Vec3, v: Vec3) -&gt; f64 {
+</span><span class="boring">     u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     Vec3::new(
+</span><span class="boring">         u.e[1] * v.e[2] - u.e[2] * v.e[1],
+</span><span class="boring">         u.e[2] * v.e[0] - u.e[0] * v.e[2],
+</span><span class="boring">         u.e[0] * v.e[1] - u.e[1] * v.e[0],
+</span><span class="boring">     )
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn unit_vector(v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     v / v.length()
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> #[inline]
++pub fn random_unit_vector() -&gt; Vec3 {
++    loop {
++        let p = Vec3::random_range(-1.0, 1.0);
++        let lensq = p.length_squared();
++        if lensq &lt;= 1.0 {
++            return p / f64::sqrt(lensq);
++        }
++    }
++}
+<span class="boring">+
+</span><span class="boring">+#[inline]
+</span><span class="boring"> pub fn random_in_unit_disk() -&gt; Vec3 {
+</span><span class="boring">     loop {
+</span><span class="boring">         let p = Vec3::new(
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             0.0,
+</span><span class="boring">         );
+</span><span class="boring">         if p.length_squared() &lt; 1.0 {
+</span><span class="boring">             return p;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 48:</strong> [<a href="https://github.com/goldnor/code/blob/7f3d292868eea2acfcbcc87b7fb42341c59c55e1/src/vec3.rs">vec3.rs</a>] <em>The random_unit_vector() function, version one</em></p>
+<br>
+<p>Sadly, we have a small floating-point abstraction leak to deal with. Since floating-point numbers have finite precision, a very small value can underflow to zero when squared. So if all three coordinates are small enough (that is, very near the center of the sphere), the norm of the vector will be zero, and thus normalizing will yield the bogus vector \( [\pm \infty, \pm \infty, \pm \infty] \). To fix this, we'll also reject points that lie inside this “black hole” around the center. With double precision (64-bit floats), we can safely support values greater than 10−160.</p>
+<p>Here's our more robust function:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/vec3.rs b/src/vec3.rs
+</span><span class="boring">index e3ee3ea..ba86acc 100644
+</span><span class="boring">--- a/src/vec3.rs
+</span><span class="boring">+++ b/src/vec3.rs
+</span><span class="boring">@@ -1,213 +1,213 @@
+</span><span class="boring"> use std::{
+</span><span class="boring">     fmt::Display,
+</span><span class="boring">     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Vec3 {
+</span><span class="boring">     pub e: [f64; 3],
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> pub type Point3 = Vec3;
+</span><span class="boring"> 
+</span><span class="boring"> impl Vec3 {
+</span><span class="boring">     pub fn new(e0: f64, e1: f64, e2: f64) -&gt; Self {
+</span><span class="boring">         Self { e: [e0, e1, e2] }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn x(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn y(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[1]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn z(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length(&amp;self) -&gt; f64 {
+</span><span class="boring">         f64::sqrt(self.length_squared())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length_squared(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn random() -&gt; Self {
+</span><span class="boring">         Vec3 { e: rand::random() }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn random_range(min: f64, max: f64) -&gt; Self {
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Neg for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn neg(self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: self.e.map(|e| -e),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Index&lt;usize&gt; for Vec3 {
+</span><span class="boring">     type Output = f64;
+</span><span class="boring"> 
+</span><span class="boring">     fn index(&amp;self, index: usize) -&gt; &amp;Self::Output {
+</span><span class="boring">         &amp;self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl IndexMut&lt;usize&gt; for Vec3 {
+</span><span class="boring">     fn index_mut(&amp;mut self, index: usize) -&gt; &amp;mut Self::Output {
+</span><span class="boring">         &amp;mut self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl AddAssign for Vec3 {
+</span><span class="boring">     fn add_assign(&amp;mut self, rhs: Self) {
+</span><span class="boring">         self.e[0] += rhs.e[0];
+</span><span class="boring">         self.e[1] += rhs.e[1];
+</span><span class="boring">         self.e[2] += rhs.e[2];
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl MulAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn mul_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.e[0] *= rhs;
+</span><span class="boring">         self.e[1] *= rhs;
+</span><span class="boring">         self.e[2] *= rhs;
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl DivAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn div_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.mul_assign(1.0 / rhs);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Display for Vec3 {
+</span><span class="boring">     fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">         write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Add for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn add(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] + rhs.e[0],
+</span><span class="boring">                 self.e[1] + rhs.e[1],
+</span><span class="boring">                 self.e[2] + rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sub for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn sub(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] - rhs.e[0],
+</span><span class="boring">                 self.e[1] - rhs.e[1],
+</span><span class="boring">                 self.e[2] - rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] * rhs.e[0],
+</span><span class="boring">                 self.e[1] * rhs.e[1],
+</span><span class="boring">                 self.e[2] * rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;Vec3&gt; for f64 {
+</span><span class="boring">     type Output = Vec3;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Vec3) -&gt; Self::Output {
+</span><span class="boring">         rhs.mul(self)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Div&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn div(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         self * (1.0 / rhs)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn dot(u: Vec3, v: Vec3) -&gt; f64 {
+</span><span class="boring">     u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     Vec3::new(
+</span><span class="boring">         u.e[1] * v.e[2] - u.e[2] * v.e[1],
+</span><span class="boring">         u.e[2] * v.e[0] - u.e[0] * v.e[2],
+</span><span class="boring">         u.e[0] * v.e[1] - u.e[1] * v.e[0],
+</span><span class="boring">     )
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn unit_vector(v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     v / v.length()
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> #[inline]
+ pub fn random_unit_vector() -&gt; Vec3 {
+     loop {
+         let p = Vec3::random_range(-1.0, 1.0);
+         let lensq = p.length_squared();
+<span class="boring">-        if lensq &lt;= 1.0 {
+</span>+        if 1e-160 &lt; lensq &amp;&amp; lensq &lt;= 1.0 {
+             return p / f64::sqrt(lensq);
+         }
+     }
+ }
+<span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn random_in_unit_disk() -&gt; Vec3 {
+</span><span class="boring">     loop {
+</span><span class="boring">         let p = Vec3::new(
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             0.0,
+</span><span class="boring">         );
+</span><span class="boring">         if p.length_squared() &lt; 1.0 {
+</span><span class="boring">             return p;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 49:</strong> [<a href="https://github.com/goldnor/code/blob/ad94c6aff825a9cf5c9a0983bfefc7a5e3900725/src/vec3.rs">vec3.rs</a>] <em>The random_unit_vector() function, version two</em></p>
+<br>
+<p>Now that we have a random unit vector, we can determine if it is on the correct hemisphere by comparing against the surface normal:</p>
+<p><img src="../../imgs/fig-1.13-surface-normal.jpg" alt="The normal vector tells us which hemisphere we need" /></p>
+<p><strong>Figure 13:</strong> <em>The normal vector tells us which hemisphere we need</em></p>
+<br>
+<p>We can take the dot product of the surface normal and our random vector to determine if it's in the correct hemisphere. If the dot product is positive, then the vector is in the correct hemisphere. If the dot product is negative, then we need to invert the vector.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/vec3.rs b/src/vec3.rs
+</span><span class="boring">index ba86acc..4cb969b 100644
+</span><span class="boring">--- a/src/vec3.rs
+</span><span class="boring">+++ b/src/vec3.rs
+</span><span class="boring">@@ -1,213 +1,223 @@
+</span><span class="boring"> use std::{
+</span><span class="boring">     fmt::Display,
+</span><span class="boring">     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub},
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Vec3 {
+</span><span class="boring">     pub e: [f64; 3],
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> pub type Point3 = Vec3;
+</span><span class="boring"> 
+</span><span class="boring"> impl Vec3 {
+</span><span class="boring">     pub fn new(e0: f64, e1: f64, e2: f64) -&gt; Self {
+</span><span class="boring">         Self { e: [e0, e1, e2] }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn x(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn y(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[1]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn z(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length(&amp;self) -&gt; f64 {
+</span><span class="boring">         f64::sqrt(self.length_squared())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn length_squared(&amp;self) -&gt; f64 {
+</span><span class="boring">         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn random() -&gt; Self {
+</span><span class="boring">         Vec3 { e: rand::random() }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn random_range(min: f64, max: f64) -&gt; Self {
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">             rand::random_range(min..max),
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Neg for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn neg(self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: self.e.map(|e| -e),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Index&lt;usize&gt; for Vec3 {
+</span><span class="boring">     type Output = f64;
+</span><span class="boring"> 
+</span><span class="boring">     fn index(&amp;self, index: usize) -&gt; &amp;Self::Output {
+</span><span class="boring">         &amp;self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl IndexMut&lt;usize&gt; for Vec3 {
+</span><span class="boring">     fn index_mut(&amp;mut self, index: usize) -&gt; &amp;mut Self::Output {
+</span><span class="boring">         &amp;mut self.e[index]
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl AddAssign for Vec3 {
+</span><span class="boring">     fn add_assign(&amp;mut self, rhs: Self) {
+</span><span class="boring">         self.e[0] += rhs.e[0];
+</span><span class="boring">         self.e[1] += rhs.e[1];
+</span><span class="boring">         self.e[2] += rhs.e[2];
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl MulAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn mul_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.e[0] *= rhs;
+</span><span class="boring">         self.e[1] *= rhs;
+</span><span class="boring">         self.e[2] *= rhs;
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl DivAssign&lt;f64&gt; for Vec3 {
+</span><span class="boring">     fn div_assign(&amp;mut self, rhs: f64) {
+</span><span class="boring">         self.mul_assign(1.0 / rhs);
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Display for Vec3 {
+</span><span class="boring">     fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">         write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Add for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn add(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] + rhs.e[0],
+</span><span class="boring">                 self.e[1] + rhs.e[1],
+</span><span class="boring">                 self.e[2] + rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Sub for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn sub(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] - rhs.e[0],
+</span><span class="boring">                 self.e[1] - rhs.e[1],
+</span><span class="boring">                 self.e[2] - rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Self) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [
+</span><span class="boring">                 self.e[0] * rhs.e[0],
+</span><span class="boring">                 self.e[1] * rhs.e[1],
+</span><span class="boring">                 self.e[2] * rhs.e[2],
+</span><span class="boring">             ],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         Self::Output {
+</span><span class="boring">             e: [self.e[0] * rhs, self.e[1] * rhs, self.e[2] * rhs],
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Mul&lt;Vec3&gt; for f64 {
+</span><span class="boring">     type Output = Vec3;
+</span><span class="boring"> 
+</span><span class="boring">     fn mul(self, rhs: Vec3) -&gt; Self::Output {
+</span><span class="boring">         rhs.mul(self)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Div&lt;f64&gt; for Vec3 {
+</span><span class="boring">     type Output = Self;
+</span><span class="boring"> 
+</span><span class="boring">     fn div(self, rhs: f64) -&gt; Self::Output {
+</span><span class="boring">         self * (1.0 / rhs)
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn dot(u: Vec3, v: Vec3) -&gt; f64 {
+</span><span class="boring">     u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn cross(u: Vec3, v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     Vec3::new(
+</span><span class="boring">         u.e[1] * v.e[2] - u.e[2] * v.e[1],
+</span><span class="boring">         u.e[2] * v.e[0] - u.e[0] * v.e[2],
+</span><span class="boring">         u.e[0] * v.e[1] - u.e[1] * v.e[0],
+</span><span class="boring">     )
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn unit_vector(v: Vec3) -&gt; Vec3 {
+</span><span class="boring">     v / v.length()
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[inline]
+</span><span class="boring"> pub fn random_unit_vector() -&gt; Vec3 {
+</span><span class="boring">     loop {
+</span><span class="boring">         let p = Vec3::random_range(-1.0, 1.0);
+</span><span class="boring">         let lensq = p.length_squared();
+</span><span class="boring">         if 1e-160 &lt; lensq &amp;&amp; lensq &lt;= 1.0 {
+</span><span class="boring">             return p / f64::sqrt(lensq);
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> #[inline]
++pub fn random_on_hemisphere(normal: Vec3) -&gt; Vec3 {
++    let on_unit_sphere = random_unit_vector();
++    if dot(on_unit_sphere, normal) &gt; 0.0 {
++        on_unit_sphere
++    } else {
++        -on_unit_sphere
++    }
++}
+<span class="boring">+
+</span><span class="boring">+#[inline]
+</span><span class="boring"> pub fn random_in_unit_disk() -&gt; Vec3 {
+</span><span class="boring">     loop {
+</span><span class="boring">         let p = Vec3::new(
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             rand::random_range(-1.0..1.0),
+</span><span class="boring">             0.0,
+</span><span class="boring">         );
+</span><span class="boring">         if p.length_squared() &lt; 1.0 {
+</span><span class="boring">             return p;
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 50:</strong> [<a href="https://github.com/goldnor/code/blob/ed6876bfb6d8535e8c38b088f219963a12040a42/src/vec3.rs">vec3.rs</a>] <em>The random_on_hemisphere() function</em></p>
+<br>
+<p>If a ray bounces off of a material and keeps 100% of its color, then we say that the material is <em>white</em>. If a ray bounces off of a material and keeps 0% of its color, then we say that the material is black. As a first demonstration of our new diffuse material we'll set the <code>ray_color</code> function to return 50% of the color from a bounce. We should expect to get a nice gray color.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/camera.rs b/src/camera.rs
+</span><span class="boring">index f181b03..181eb64 100644
+</span><span class="boring">--- a/src/camera.rs
+</span><span class="boring">+++ b/src/camera.rs
+</span><span class="boring">@@ -1,151 +1,152 @@
+</span><span class="boring"> use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring"> 
+</span><span class="boring"> pub struct Camera {
+</span><span class="boring">     /// Ratio of image width over height
+</span><span class="boring">     pub aspect_ratio: f64,
+</span><span class="boring">     /// Rendered image width in pixel count
+</span><span class="boring">     pub image_width: i32,
+</span><span class="boring">     // Count of random samples for each pixel
+</span><span class="boring">     pub samples_per_pixel: i32,
+</span><span class="boring"> 
+</span><span class="boring">     /// Rendered image height
+</span><span class="boring">     image_height: i32,
+</span><span class="boring">     // Color scale factor for a sum of pixel samples
+</span><span class="boring">     pixel_samples_scale: f64,
+</span><span class="boring">     /// Camera center
+</span><span class="boring">     center: Point3,
+</span><span class="boring">     /// Location of pixel 0, 0
+</span><span class="boring">     pixel00_loc: Point3,
+</span><span class="boring">     /// Offset to pixel to the right
+</span><span class="boring">     pixel_delta_u: Vec3,
+</span><span class="boring">     /// Offset to pixel below
+</span><span class="boring">     pixel_delta_v: Vec3,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Default for Camera {
+</span><span class="boring">     fn default() -&gt; Self {
+</span><span class="boring">         Self {
+</span><span class="boring">             aspect_ratio: 1.0,
+</span><span class="boring">             image_width: 100,
+</span><span class="boring">             samples_per_pixel: 10,
+</span><span class="boring">             image_height: Default::default(),
+</span><span class="boring">             pixel_samples_scale: Default::default(),
+</span><span class="boring">             center: Default::default(),
+</span><span class="boring">             pixel00_loc: Default::default(),
+</span><span class="boring">             pixel_delta_u: Default::default(),
+</span><span class="boring">             pixel_delta_v: Default::default(),
+</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Camera {
+<span class="boring">     pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+</span><span class="boring">         self.aspect_ratio = aspect_ratio;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+</span><span class="boring">         self.image_width = image_width;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_samples_per_pixel(mut self, samples_per_pixel: i32) -&gt; Self {
+</span><span class="boring">         self.samples_per_pixel = samples_per_pixel;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">         self.initialize();
+</span><span class="boring"> 
+</span><span class="boring">         println!("P3");
+</span><span class="boring">         println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">         println!("255");
+</span><span class="boring"> 
+</span><span class="boring">         for j in 0..self.image_height {
+</span><span class="boring">             info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">             for i in 0..self.image_width {
+</span><span class="boring">                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+</span><span class="boring">                 for _sample in 0..self.samples_per_pixel {
+</span><span class="boring">                     let r = self.get_ray(i, j);
+</span><span class="boring">                     pixel_color += Self::ray_color(r, world);
+</span><span class="boring">                 }
+</span><span class="boring">                 write_color(std::io::stdout(), self.pixel_samples_scale * pixel_color)?;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span><span class="boring">         info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">         Ok(())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn initialize(&amp;mut self) {
+</span><span class="boring">         self.image_height = {
+</span><span class="boring">             let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">             if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">         };
+</span><span class="boring"> 
+</span><span class="boring">         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+</span><span class="boring"> 
+</span><span class="boring">         self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">         // Determine viewport dimensions.
+</span><span class="boring">         let focal_length = 1.0;
+</span><span class="boring">         let viewport_height = 2.0;
+</span><span class="boring">         let viewport_width =
+</span><span class="boring">             viewport_height * (self.image_width as f64) / (self.image_height as f64);
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the vectors across the horizontal and down the vertical viewport edges.
+</span><span class="boring">         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+</span><span class="boring">         let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+</span><span class="boring">         self.pixel_delta_u = viewport_u / self.image_width as f64;
+</span><span class="boring">         self.pixel_delta_v = viewport_v / self.image_height as f64;
+</span><span class="boring"> 
+</span><span class="boring">         // Calculate the location of the upper left pixel.
+</span><span class="boring">         let viewport_upper_left =
+</span><span class="boring">             self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+</span><span class="boring">         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn get_ray(&amp;self, i: i32, j: i32) -&gt; Ray {
+</span><span class="boring">         // Construct a camera ray originating from the origin and directed at randomly sampled
+</span><span class="boring">         // point around the pixel location i, j.
+</span><span class="boring"> 
+</span><span class="boring">         let offset = Self::sample_square();
+</span><span class="boring">         let pixel_sample = self.pixel00_loc
+</span><span class="boring">             + ((i as f64 + offset.x()) * self.pixel_delta_u)
+</span><span class="boring">             + ((j as f64 + offset.y()) * self.pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">         let ray_origin = self.center;
+</span><span class="boring">         let ray_direction = pixel_sample - ray_origin;
+</span><span class="boring"> 
+</span><span class="boring">         Ray::new(ray_origin, ray_direction)
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn sample_square() -&gt; Vec3 {
+</span><span class="boring">         // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             0.0,
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn _sample_disk(radius: f64) -&gt; Vec3 {
+</span><span class="boring">         // Returns a random point in the unit (radius 0.5) disk centered at the origin.
+</span><span class="boring">         radius * random_in_unit_disk()
+</span><span class="boring">     }
+</span> 
+     fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+         if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+<span class="boring">-            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+</span>+            let direction = random_on_hemisphere(rec.normal);
++            return 0.5 * Self::ray_color(Ray::new(rec.p, direction), world);
+         }
+ 
+         let unit_direction = unit_vector(r.direction());
+         let a = 0.5 * (unit_direction.y() + 1.0);
+         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+     }
+ }</code></pre>
+<p><strong>Listing 51:</strong> [<a href="https://github.com/goldnor/code/blob/6add135dade4bf646ea0543faade188411b1df81/src/camera.rs">camera.rs</a>] <em>ray_color() using a random ray direction</em></p>
+<br>
+<p>... Indeed we do get rather nice gray spheres:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.07-first-diffuse.png" alt="First render of a diffuse sphere">
+<p><strong>Image 7:</strong> <em>First render of a diffuse sphere</em></p>
+<br>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../chapters/diffuse_materials/diffuse_materials.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../chapters/diffuse_materials/limiting_the_number_of_child_rays.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../chapters/diffuse_materials/diffuse_materials.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../chapters/diffuse_materials/limiting_the_number_of_child_rays.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

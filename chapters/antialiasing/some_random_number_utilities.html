@@ -168,7 +168,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="some-random-number-utilities-1"><a class="header" href="#some-random-number-utilities-1">Some Random Number Utilities <sup class="footnote-reference" id="fr-81a-1"><a href="#footnote-81a">1</a></sup></a></h1>
+                        <h2 id="some-random-number-utilities-1"><a class="header" href="#some-random-number-utilities-1">Some Random Number Utilities <sup class="footnote-reference" id="fr-81a-1"><a href="#footnote-81a">1</a></sup></a></h2>
 <p>We're going to need a random number generator that returns real random numbers. This function should return a canonical random number, which by convention falls in the range \( 0 \le n &lt; 1 \). The “less than” before the \( 1 \) is important, as we will sometimes take advantage of that.</p>
 <p>A simple approach to this is to use the <code>std::rand()</code> function that can be found in <code>&lt;cstdlib&gt;</code>, which returns a random integer in the range <code>0</code> and <code>RAND_MAX</code>. Hence we can get a real random number as desired with the following code snippet, added to <code>rtweekend.h</code>:</p>
 <pre><code class="language-rust norun noplayground">// Utility Functions

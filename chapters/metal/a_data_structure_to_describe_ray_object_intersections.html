@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Creating Our First Raytraced Image - Ray Tracing in One Weekend (Rust)</title>
+        <title>A Data Structure to Describe Ray-Object Intersections - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,111 +168,148 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
-<p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
-<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index f31dc16..e3d9091 100644
-</span><span class="boring">--- a/src/main.rs
-</span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,67 +1,81 @@
-</span> use code::{
-     color::{Color, write_color},
-     ray::Ray,
-<span class="boring">-    vec3::{Point3, Vec3, unit_vector},
-</span>+    vec3::{Point3, Vec3, dot, unit_vector},
- };
+                        <h2 id="a-data-structure-to-describe-ray-object-intersections"><a class="header" href="#a-data-structure-to-describe-ray-object-intersections">A Data Structure to Describe Ray-Object Intersections</a></h2>
+<p>The <code>hit_record</code> is to avoid a bunch of arguments so we can stuff whatever info we want in there. You can use arguments instead of an encapsulated type, it’s just a matter of taste. Hittables and materials need to be able to reference the other's type in code so there is some circularity of the references. In C++ we add the line class material; to tell the compiler that material is a class that will be defined later. Since we're just specifying a pointer to the class, the compiler doesn't need to know the details of the class, solving the circular reference issue. <sup class="footnote-reference" id="fr-102a-1"><a href="#footnote-102a">1</a></sup></p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/hittable.rs b/src/hittable.rs
+</span><span class="boring">index 1b65b92..000dc1d 100644
+</span><span class="boring">--- a/src/hittable.rs
+</span><span class="boring">+++ b/src/hittable.rs
+</span><span class="boring">@@ -1,27 +1,43 @@
+</span><span class="boring">-use crate::prelude::*;
+</span>+use crate::{
++    material::{Lambertian, Material},
++    prelude::*,
++};
  
-+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
-+    let oc = center - r.origin();
-+    let a = dot(r.direction(), r.direction());
-+    let b = -2.0 * dot(r.direction(), oc);
-+    let c = dot(oc, oc) - radius * radius;
-+    let discriminant = b * b - 4.0 * a * c;
-+
-+    discriminant &gt;= 0.0
-+}
-+
- fn ray_color(r: Ray) -&gt; Color {
-+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-+        return Color::new(1.0, 0.0, 0.0);
-+    }
-+
-     let unit_direction = unit_vector(r.direction());
-     let a = 0.5 * (unit_direction.y() + 1.0);
-     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+-#[derive(Debug, Default, Clone, Copy)]
++#[derive(Clone)]
+ pub struct HitRecord {
+     pub p: Point3,
+     pub normal: Vec3,
++    pub mat: Rc&lt;dyn Material&gt;,
+     pub t: f64,
+     pub front_face: bool,
  }
-<span class="boring"> 
-</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-</span><span class="boring">     // Image
+ 
++impl Default for HitRecord {
++    fn default() -&gt; Self {
++        Self {
++            p: Default::default(),
++            normal: Default::default(),
++            mat: Rc::new(Lambertian::default()),
++            t: Default::default(),
++            front_face: Default::default(),
++        }
++    }
++}
+<span class="boring">+
+</span><span class="boring"> impl HitRecord {
+</span><span class="boring">     pub fn set_face_normal(&amp;mut self, r: Ray, outward_normal: Vec3) {
+</span><span class="boring">         // Sets the hit record normal vector.
+</span><span class="boring">         // NOTE: the parameter `outward_normal` is assumed to have unit length.
 </span><span class="boring"> 
-</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
-</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
-</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
-</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
-</span><span class="boring">     };
-</span><span class="boring"> 
-</span><span class="boring">     // Camera
-</span><span class="boring"> 
-</span><span class="boring">     let focal_length = 1.0;
-</span><span class="boring">     let viewport_height = 2.0;
-</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
-</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
-</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
-</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the location of the upper left pixel.
-</span><span class="boring">     let viewport_upper_left =
-</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-</span><span class="boring"> 
-</span><span class="boring">     // Render
-</span><span class="boring"> 
-</span><span class="boring">     env_logger::init();
-</span><span class="boring">     println!("P3");
-</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-</span><span class="boring">     println!("255");
-</span><span class="boring"> 
-</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
-</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
-</span><span class="boring">         for i in 0..IMAGE_WIDTH {
-</span><span class="boring">             let pixel_center =
-</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
-</span><span class="boring">             let ray_direction = pixel_center - camera_center;
-</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
-</span><span class="boring"> 
-</span><span class="boring">             let pixel_color = ray_color(r);
-</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
-</span><span class="boring">         }
+</span><span class="boring">         self.front_face = dot(r.direction(), outward_normal) &lt; 0.0;
+</span><span class="boring">         self.normal = if self.front_face {
+</span><span class="boring">             outward_normal
+</span><span class="boring">         } else {
+</span><span class="boring">             -outward_normal
+</span><span class="boring">         };
 </span><span class="boring">     }
-</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> }
 </span><span class="boring"> 
-</span><span class="boring">     Ok(())
+</span><span class="boring"> pub trait Hittable {
+</span><span class="boring">     fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt;;
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 11:</strong> [<a href="https://github.com/goldnor/code/blob/2cf21871a39a309bce0edfb75464389bba9782f4/src/main.rs">main.rs</a>] <em>Rendering a red sphere</em></p>
+<p><strong>Listing 59:</strong> [<a href="https://github.com/goldnor/code/blob/c2bd376435e53106f8045a293708f0e5c0f2d549/src/hittable.rs">hittable.rs</a>] <em>Hit record with added material pointer</em> <sup class="footnote-reference" id="fr-102b-1"><a href="#footnote-102b">2</a></sup></p>
 <br>
-<p>What we get is this:</p>
-<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
-<p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+<p><code>hit_record</code> is just a way to stuff a bunch of arguments into a class so we can send them as a group. When a ray hits a surface (a particular sphere for example), the material pointer in the <code>hit_record</code> will be set to point at the material pointer the sphere was given when it was set up in <code>main()</code> when we start. When the <code>ray_color()</code> routine gets the <code>hit_record</code> it can call member functions of the material pointer to find out what ray, if any, is scattered.</p>
+<p>To achieve this, <code>hit_record</code> needs to be told the material that is assigned to the sphere.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/sphere.rs b/src/sphere.rs
+</span><span class="boring">index a2710b4..2b0026a 100644
+</span><span class="boring">--- a/src/sphere.rs
+</span><span class="boring">+++ b/src/sphere.rs
+</span><span class="boring">@@ -1,56 +1,61 @@
+</span><span class="boring"> use crate::{
+</span><span class="boring">     hittable::{HitRecord, Hittable},
+</span><span class="boring">+    material::{Lambertian, Material},
+</span><span class="boring">     prelude::*,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring">-#[derive(Debug, Clone, Copy)]
+</span>+#[derive(Clone)]
+ pub struct Sphere {
+     center: Point3,
+     radius: f64,
++    mat: Rc&lt;dyn Material&gt;,
+ }
+ 
+ impl Sphere {
+     pub fn new(center: Point3, radius: f64) -&gt; Self {
+         Self {
+             center,
+             radius: f64::max(0.0, radius),
++            // TODO: Initialize the material pointer `mat`.
+<span class="boring">+            mat: Rc::new(Lambertian::default()),
+</span>         }
+     }
+ }
+ 
+ impl Hittable for Sphere {
+     fn hit(&amp;self, r: Ray, ray_t: Interval) -&gt; Option&lt;HitRecord&gt; {
+<span class="boring">         let oc = self.center - r.origin();
+</span><span class="boring">         let a = r.direction().length_squared();
+</span><span class="boring">         let h = dot(r.direction(), oc);
+</span><span class="boring">         let c = oc.length_squared() - self.radius * self.radius;
+</span><span class="boring"> 
+</span><span class="boring">         let discriminant = h * h - a * c;
+</span><span class="boring">         if discriminant &lt; 0.0 {
+</span><span class="boring">             return None;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let sqrtd = f64::sqrt(discriminant);
+</span><span class="boring"> 
+</span><span class="boring">         // Find the nearest root that lies in the acceptable range.
+</span><span class="boring">         let mut root = (h - sqrtd) / a;
+</span><span class="boring">         if !ray_t.surrounds(root) {
+</span><span class="boring">             root = (h + sqrtd) / a;
+</span><span class="boring">             if !ray_t.surrounds(root) {
+</span><span class="boring">                 return None;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span> 
+         let t = root;
+         let p = r.at(t);
+         let mut rec = HitRecord {
+             t,
+             p,
++            mat: self.mat.clone(),
+             ..Default::default()
+         };
+         let outward_normal = (p - self.center) / self.radius;
+         rec.set_face_normal(r, outward_normal);
+ 
+         Some(rec)
+     }
+ }</code></pre>
+<p><strong>Listing 60:</strong> [<a href="https://github.com/goldnor/code/blob/157464117d578d98dfb765727c52c7b1e176dd22/src/sphere.rs">sphere.rs</a>] <em>Ray-sphere intersection with added material information</em></p>
 <br>
-
+<hr>
+<ol class="footnote-definition"><li id="footnote-102a">
+<p>In Rust traits needs to be imported using the <code>use</code> keyword. Circular references are not a problem in Rust, since the <code>use</code> keyword does <em>not</em> simply copy the header file in comparison to the C++ <code>include</code> macro. <a href="#fr-102a-1">↩</a></p>
+</li>
+<li id="footnote-102b">
+<p><code>HitRecord</code> can no longer derive <code>Default</code> since <code>Rc&lt;dyn Material&gt;</code> can not implement <code>Default</code>. Instead, the default material is set to a Lambertian. <a href="#fr-102b-1">↩</a></p>
+</li>
+</ol>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/metal/an_abstract_class_for_materials.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/metal/modeling_light_scatter_and_reflectance.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -282,11 +319,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/metal/an_abstract_class_for_materials.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/metal/modeling_light_scatter_and_reflectance.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

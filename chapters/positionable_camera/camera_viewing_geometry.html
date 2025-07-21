@@ -1,0 +1,488 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Camera Viewing Geometry - Ray Tracing in One Weekend (Rust)</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="camera-viewing-geometry"><a class="header" href="#camera-viewing-geometry">Camera Viewing Geometry</a></h2>
+<p>First, we'll keep the rays coming from the origin and heading to the \( z = -1\) plane. We could make it the \( z = -2 \) plane, or whatever, as long as we made ℎ a ratio to that distance. Here is our setup:</p>
+<p><img src="../../imgs/fig-1.18-cam-view-geom.jpg" alt="Camera viewing geometry (from the side)" /></p>
+<p><strong>Figure 18:</strong> <em>Camera viewing geometry (from the side)</em></p>
+<br>
+<p>This implies \( h = \tan (\frac{\theta}{2}) \). Our camera now becomes:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/camera.rs b/src/camera.rs
+</span><span class="boring">index 1927898..8e256aa 100644
+</span><span class="boring">--- a/src/camera.rs
+</span><span class="boring">+++ b/src/camera.rs
+</span><span class="boring">@@ -1,168 +1,179 @@
+</span><span class="boring"> use crate::{hittable::Hittable, prelude::*};
+</span><span class="boring"> 
+</span> pub struct Camera {
+     /// Ratio of image width over height
+     pub aspect_ratio: f64,
+     /// Rendered image width in pixel count
+     pub image_width: i32,
+     // Count of random samples for each pixel
+     pub samples_per_pixel: i32,
+     // Maximum number of ray bounces into scene
+     pub max_depth: i32,
++    // Vertical view angle (field of view)
++    pub vfov: f64,
+ 
+     /// Rendered image height
+     image_height: i32,
+     // Color scale factor for a sum of pixel samples
+     pixel_samples_scale: f64,
+     /// Camera center
+     center: Point3,
+     /// Location of pixel 0, 0
+     pixel00_loc: Point3,
+     /// Offset to pixel to the right
+     pixel_delta_u: Vec3,
+     /// Offset to pixel below
+     pixel_delta_v: Vec3,
+ }
+ 
+ impl Default for Camera {
+     fn default() -&gt; Self {
+         Self {
+             aspect_ratio: 1.0,
+             image_width: 100,
+             samples_per_pixel: 10,
+             max_depth: 10,
++            vfov: 90.0,
+             image_height: Default::default(),
+             pixel_samples_scale: Default::default(),
+             center: Default::default(),
+             pixel00_loc: Default::default(),
+             pixel_delta_u: Default::default(),
+             pixel_delta_v: Default::default(),
+         }
+     }
+ }
+ 
+ impl Camera {
+<span class="boring">     pub fn with_aspect_ratio(mut self, aspect_ratio: f64) -&gt; Self {
+</span><span class="boring">         self.aspect_ratio = aspect_ratio;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_image_width(mut self, image_width: i32) -&gt; Self {
+</span><span class="boring">         self.image_width = image_width;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_samples_per_pixel(mut self, samples_per_pixel: i32) -&gt; Self {
+</span><span class="boring">         self.samples_per_pixel = samples_per_pixel;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_max_depth(mut self, max_depth: i32) -&gt; Self {
+</span><span class="boring">         self.max_depth = max_depth;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
+</span> 
++    pub fn with_vfov(mut self, vfov: f64) -&gt; Self {
++        self.vfov = vfov;
++
++        self
++    }
++
+<span class="boring">     pub fn render(&amp;mut self, world: &amp;impl Hittable) -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">         self.initialize();
+</span><span class="boring"> 
+</span><span class="boring">         println!("P3");
+</span><span class="boring">         println!("{} {}", self.image_width, self.image_height);
+</span><span class="boring">         println!("255");
+</span><span class="boring"> 
+</span><span class="boring">         for j in 0..self.image_height {
+</span><span class="boring">             info!("Scanlines remaining: {}", self.image_height - j);
+</span><span class="boring">             for i in 0..self.image_width {
+</span><span class="boring">                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+</span><span class="boring">                 for _sample in 0..self.samples_per_pixel {
+</span><span class="boring">                     let r = self.get_ray(i, j);
+</span><span class="boring">                     pixel_color += Self::ray_color(r, self.max_depth, world);
+</span><span class="boring">                 }
+</span><span class="boring">                 write_color(std::io::stdout(), self.pixel_samples_scale * pixel_color)?;
+</span><span class="boring">             }
+</span><span class="boring">         }
+</span><span class="boring">         info!("Done.");
+</span><span class="boring"> 
+</span><span class="boring">         Ok(())
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span>     fn initialize(&amp;mut self) {
+         self.image_height = {
+             let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+             if image_height &lt; 1 { 1 } else { image_height }
+         };
+ 
+         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+ 
+         self.center = Point3::new(0.0, 0.0, 0.0);
+ 
+         // Determine viewport dimensions.
+         let focal_length = 1.0;
+<span class="boring">-        let viewport_height = 2.0;
+</span>+        let theta = self.vfov.to_radians();
++        let h = f64::tan(theta / 2.0);
++        let viewport_height = 2.0 * h * focal_length;
+         let viewport_width =
+             viewport_height * (self.image_width as f64) / (self.image_height as f64);
+ 
+         // Calculate the vectors across the horizontal and down the vertical viewport edges.
+         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+         let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+ 
+         // Calculate the horizontal and vertical delta vectors from pixel to pixel.
+         self.pixel_delta_u = viewport_u / self.image_width as f64;
+         self.pixel_delta_v = viewport_v / self.image_height as f64;
+ 
+         // Calculate the location of the upper left pixel.
+         let viewport_upper_left =
+             self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+     }
+ 
+<span class="boring">     fn get_ray(&amp;self, i: i32, j: i32) -&gt; Ray {
+</span><span class="boring">         // Construct a camera ray originating from the origin and directed at randomly sampled
+</span><span class="boring">         // point around the pixel location i, j.
+</span><span class="boring"> 
+</span><span class="boring">         let offset = Self::sample_square();
+</span><span class="boring">         let pixel_sample = self.pixel00_loc
+</span><span class="boring">             + ((i as f64 + offset.x()) * self.pixel_delta_u)
+</span><span class="boring">             + ((j as f64 + offset.y()) * self.pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">         let ray_origin = self.center;
+</span><span class="boring">         let ray_direction = pixel_sample - ray_origin;
+</span><span class="boring"> 
+</span><span class="boring">         Ray::new(ray_origin, ray_direction)
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn sample_square() -&gt; Vec3 {
+</span><span class="boring">         // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             0.0,
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn _sample_disk(radius: f64) -&gt; Vec3 {
+</span><span class="boring">         // Returns a random point in the unit (radius 0.5) disk centered at the origin.
+</span><span class="boring">         radius * random_in_unit_disk()
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn ray_color(r: Ray, depth: i32, world: &amp;impl Hittable) -&gt; Color {
+</span><span class="boring">         // If we've exceeded the ray bounce limit, no more light is gathered.
+</span><span class="boring">         if depth &lt;= 0 {
+</span><span class="boring">             return Color::new(0.0, 0.0, 0.0);
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         if let Some(rec) = world.hit(r, Interval::new(0.001, INFINITY)) {
+</span><span class="boring">             if let Some((scattered, attenuation)) = rec.mat.scatter(r, rec.clone()) {
+</span><span class="boring">                 return attenuation * Self::ray_color(scattered, depth - 1, world);
+</span><span class="boring">             }
+</span><span class="boring">             return Color::new(0.0, 0.0, 0.0);
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let unit_direction = unit_vector(r.direction());
+</span><span class="boring">         let a = 0.5 * (unit_direction.y() + 1.0);
+</span><span class="boring">         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+</span><span class="boring">     }
+</span> }</code></pre>
+<p><strong>Listing 80:</strong> [<a href="https://github.com/goldnor/code/blob/4927dc70bdac3e6a5f2b3ecf174ee2c4b70a2c65/src/camera.rs">camera.rs</a>] <em>Camera with adjustable field-of-view (fov)</em></p>
+<br>
+<p>We'll test out these changes with a simple scene of two touching spheres, using a 90° field of view.</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index c0d6703..e906c8c 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,52 +1,37 @@
+</span><span class="boring"> use code::{
+</span><span class="boring">     camera::Camera,
+</span><span class="boring">     hittable_list::HittableList,
+</span><span class="boring">     material::{Dielectric, Lambertian, Metal},
+</span><span class="boring">     prelude::*,
+</span><span class="boring">     sphere::Sphere,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span> fn main() -&gt; std::io::Result&lt;()&gt; {
+     let mut world = HittableList::new();
+ 
+<span class="boring">-    let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+</span><span class="boring">-    let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+</span><span class="boring">-    let material_left = Rc::new(Dielectric::new(1.5));
+</span><span class="boring">-    let material_bubble = Rc::new(Dielectric::new(1.0 / 1.5));
+</span><span class="boring">-    let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+</span>+    let r = f64::cos(PI / 4.0);
++
++    let material_left = Rc::new(Lambertian::new(Color::new(0.0, 0.0, 1.0)));
++    let material_right = Rc::new(Lambertian::new(Color::new(1.0, 0.0, 0.0)));
+ 
+     world.add(Rc::new(Sphere::new(
+<span class="boring">-        Point3::new(0.0, -100.5, -1.0),
+</span><span class="boring">-        100.0,
+</span><span class="boring">-        material_ground,
+</span><span class="boring">-    )));
+</span><span class="boring">-    world.add(Rc::new(Sphere::new(
+</span><span class="boring">-        Point3::new(0.0, 0.0, -1.2),
+</span><span class="boring">-        0.5,
+</span><span class="boring">-        material_center,
+</span><span class="boring">-    )));
+</span><span class="boring">-    world.add(Rc::new(Sphere::new(
+</span><span class="boring">-        Point3::new(-1.0, 0.0, -1.0),
+</span><span class="boring">-        0.5,
+</span>+        Point3::new(-r, 0.0, -1.0),
++        r,
+         material_left,
+     )));
+     world.add(Rc::new(Sphere::new(
+<span class="boring">-        Point3::new(-1.0, 0.0, -1.0),
+</span><span class="boring">-        0.4,
+</span><span class="boring">-        material_bubble,
+</span><span class="boring">-    )));
+</span><span class="boring">-    world.add(Rc::new(Sphere::new(
+</span><span class="boring">-        Point3::new(1.0, 0.0, -1.0),
+</span><span class="boring">-        0.5,
+</span>+        Point3::new(r, 0.0, -1.0),
++        r,
+         material_right,
+     )));
+ 
+     env_logger::init();
+ 
+     Camera::default()
+         .with_aspect_ratio(16.0 / 9.0)
+         .with_image_width(400)
+         .with_samples_per_pixel(100)
+         .with_max_depth(50)
++        .with_vfov(90.0)
+         .render(&amp;world)
+ }</code></pre>
+<p><strong>Listing 81:</strong> [<a href="https://github.com/goldnor/code/blob/52ee7bbdb1a7614b145e3821c1ab91fd010ed7ce/src/main.rs">main.rs</a>] <em>Scene with wide-angle camera</em></p>
+<br>
+<p>This gives us the rendering:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.19-wide-view.png" alt="A wide-angle view">
+<p><strong>Image 19:</strong> <em>A wide-angle view</em></p>
+<br>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../chapters/positionable_camera/positionable_camera.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../chapters/positionable_camera/positioning_and_orienting_the_camera.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../chapters/positionable_camera/positionable_camera.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../chapters/positionable_camera/positioning_and_orienting_the_camera.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

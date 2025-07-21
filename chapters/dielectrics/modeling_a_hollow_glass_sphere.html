@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Creating Our First Raytraced Image - Ray Tracing in One Weekend (Rust)</title>
+        <title>Modeling a Hollow Glass Sphere - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,111 +168,85 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
-<p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
+                        <h2 id="modeling-a-hollow-glass-sphere"><a class="header" href="#modeling-a-hollow-glass-sphere">Modeling a Hollow Glass Sphere</a></h2>
+<p>Let's model a hollow glass sphere. This is a sphere of some thickness with another sphere of air inside it. If you think about the path of a ray going through such an object, it will hit the outer sphere, refract, hit the inner sphere (assuming we do hit it), refract a second time, and travel through the air inside. Then it will continue on, hit the inside surface of the inner sphere, refract back, then hit the inside surface of the outer sphere, and finally refract and exit back into the scene atmosphere.</p>
+<p>The outer sphere is just modeled with a standard glass sphere, with a refractive index of around 1.50 (modeling a refraction from the outside air into glass). The inner sphere is a bit different because <em>its</em> refractive index should be relative to the material of the surrounding outer sphere, thus modeling a transition from glass into the inner air.</p>
+<p>This is actually simple to specify, as the <code>refraction_index</code> parameter to the dielectric material can be interpreted as the <em>ratio</em> of the refractive index of the object divided by the refractive index of the enclosing medium. In this case, the inner sphere would have an refractive index of air (the inner sphere material) over the index of refraction of glass (the enclosing medium), or \( 1.00/1.50=0.67 \).</p>
+<p>Here's the code:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index f31dc16..e3d9091 100644
+</span><span class="boring">index 6e42461..c0d6703 100644
 </span><span class="boring">--- a/src/main.rs
 </span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,67 +1,81 @@
-</span> use code::{
-     color::{Color, write_color},
-     ray::Ray,
-<span class="boring">-    vec3::{Point3, Vec3, unit_vector},
-</span>+    vec3::{Point3, Vec3, dot, unit_vector},
- };
+</span><span class="boring">@@ -1,46 +1,52 @@
+</span><span class="boring"> use code::{
+</span><span class="boring">     camera::Camera,
+</span><span class="boring">     hittable_list::HittableList,
+</span><span class="boring">     material::{Dielectric, Lambertian, Metal},
+</span><span class="boring">     prelude::*,
+</span><span class="boring">     sphere::Sphere,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> fn main() -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">     let mut world = HittableList::new();
+</span> 
+     let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+     let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+<span class="boring">-    let material_left = Rc::new(Dielectric::new(1.0 / 1.33));
+</span>+    let material_left = Rc::new(Dielectric::new(1.5));
++    let material_bubble = Rc::new(Dielectric::new(1.0 / 1.5));
+     let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
  
-+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
-+    let oc = center - r.origin();
-+    let a = dot(r.direction(), r.direction());
-+    let b = -2.0 * dot(r.direction(), oc);
-+    let c = dot(oc, oc) - radius * radius;
-+    let discriminant = b * b - 4.0 * a * c;
-+
-+    discriminant &gt;= 0.0
-+}
-+
- fn ray_color(r: Ray) -&gt; Color {
-+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-+        return Color::new(1.0, 0.0, 0.0);
-+    }
-+
-     let unit_direction = unit_vector(r.direction());
-     let a = 0.5 * (unit_direction.y() + 1.0);
-     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
- }
-<span class="boring"> 
-</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-</span><span class="boring">     // Image
+     world.add(Rc::new(Sphere::new(
+         Point3::new(0.0, -100.5, -1.0),
+         100.0,
+         material_ground,
+     )));
+     world.add(Rc::new(Sphere::new(
+         Point3::new(0.0, 0.0, -1.2),
+         0.5,
+         material_center,
+     )));
+     world.add(Rc::new(Sphere::new(
+         Point3::new(-1.0, 0.0, -1.0),
+         0.5,
+         material_left,
+     )));
+     world.add(Rc::new(Sphere::new(
++        Point3::new(-1.0, 0.0, -1.0),
++        0.4,
++        material_bubble,
++    )));
++    world.add(Rc::new(Sphere::new(
+         Point3::new(1.0, 0.0, -1.0),
+         0.5,
+         material_right,
+     )));
+ 
+<span class="boring">     env_logger::init();
 </span><span class="boring"> 
-</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
-</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
-</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
-</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
-</span><span class="boring">     };
-</span><span class="boring"> 
-</span><span class="boring">     // Camera
-</span><span class="boring"> 
-</span><span class="boring">     let focal_length = 1.0;
-</span><span class="boring">     let viewport_height = 2.0;
-</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
-</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
-</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
-</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the location of the upper left pixel.
-</span><span class="boring">     let viewport_upper_left =
-</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-</span><span class="boring"> 
-</span><span class="boring">     // Render
-</span><span class="boring"> 
-</span><span class="boring">     env_logger::init();
-</span><span class="boring">     println!("P3");
-</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-</span><span class="boring">     println!("255");
-</span><span class="boring"> 
-</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
-</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
-</span><span class="boring">         for i in 0..IMAGE_WIDTH {
-</span><span class="boring">             let pixel_center =
-</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
-</span><span class="boring">             let ray_direction = pixel_center - camera_center;
-</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
-</span><span class="boring"> 
-</span><span class="boring">             let pixel_color = ray_color(r);
-</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
-</span><span class="boring">         }
-</span><span class="boring">     }
-</span><span class="boring">     log::info!("Done.");
-</span><span class="boring"> 
-</span><span class="boring">     Ok(())
+</span><span class="boring">     Camera::default()
+</span><span class="boring">         .with_aspect_ratio(16.0 / 9.0)
+</span><span class="boring">         .with_image_width(400)
+</span><span class="boring">         .with_samples_per_pixel(100)
+</span><span class="boring">         .with_max_depth(50)
+</span><span class="boring">         .render(&amp;world)
 </span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 11:</strong> [<a href="https://github.com/goldnor/code/blob/2cf21871a39a309bce0edfb75464389bba9782f4/src/main.rs">main.rs</a>] <em>Rendering a red sphere</em></p>
+<p><strong>Listing 79:</strong> [<a href="https://github.com/goldnor/code/blob/3d2dfe52b90bf3d6bc1287c0b5bcbbbb998b1d47/src/main.rs">main.rs</a>] <em>Scene with hollow glass sphere</em></p>
 <br>
-<p>What we get is this:</p>
-<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
-<p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+<p>And here's the result:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.18-glass-hollow.png" alt="A hollow glass sphere">
+<p><strong>Image 18:</strong> <em>A hollow glass sphere</em></p>
 <br>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/dielectrics/schlick_approximation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/positionable_camera/positionable_camera.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -282,11 +256,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/dielectrics/schlick_approximation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/positionable_camera/positionable_camera.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

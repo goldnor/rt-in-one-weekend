@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Creating Our First Raytraced Image - Ray Tracing in One Weekend (Rust)</title>
+        <title>Schlick Approximation - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,111 +168,130 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="creating-our-first-raytraced-image"><a class="header" href="#creating-our-first-raytraced-image">Creating Our First Raytraced Image</a></h2>
-<p>If we take that math and hard-code it into our program, we can test our code by placing a small sphere at \( −1 \) on the z-axis and then coloring red any pixel that intersects it.</p>
-<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index f31dc16..e3d9091 100644
-</span><span class="boring">--- a/src/main.rs
-</span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,67 +1,81 @@
-</span> use code::{
-     color::{Color, write_color},
-     ray::Ray,
-<span class="boring">-    vec3::{Point3, Vec3, unit_vector},
-</span>+    vec3::{Point3, Vec3, dot, unit_vector},
- };
- 
-+fn hit_sphere(center: Point3, radius: f64, r: Ray) -&gt; bool {
-+    let oc = center - r.origin();
-+    let a = dot(r.direction(), r.direction());
-+    let b = -2.0 * dot(r.direction(), oc);
-+    let c = dot(oc, oc) - radius * radius;
-+    let discriminant = b * b - 4.0 * a * c;
-+
-+    discriminant &gt;= 0.0
-+}
-+
- fn ray_color(r: Ray) -&gt; Color {
-+    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) {
-+        return Color::new(1.0, 0.0, 0.0);
-+    }
-+
-     let unit_direction = unit_vector(r.direction());
-     let a = 0.5 * (unit_direction.y() + 1.0);
-     (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
- }
-<span class="boring"> 
-</span><span class="boring"> fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
-</span><span class="boring">     // Image
+                        <h2 id="schlick-approximation"><a class="header" href="#schlick-approximation">Schlick Approximation</a></h2>
+<p>Now real glass has reflectivity that varies with angle — look at a window at a steep angle and it becomes a mirror. There is a big ugly equation for that, but almost everybody uses a cheap and surprisingly accurate polynomial approximation by Christophe Schlick. This yields our full glass material:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/material.rs b/src/material.rs
+</span><span class="boring">index 951f550..20477f9 100644
+</span><span class="boring">--- a/src/material.rs
+</span><span class="boring">+++ b/src/material.rs
+</span><span class="boring">@@ -1,97 +1,104 @@
+</span><span class="boring"> use crate::{hittable::HitRecord, prelude::*};
 </span><span class="boring"> 
-</span><span class="boring">     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-</span><span class="boring">     const IMAGE_WIDTH: i32 = 400;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the image height, and ensure that it's at least 1.
-</span><span class="boring">     const IMAGE_HEIGHT: i32 = {
-</span><span class="boring">         let image_height = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as i32;
-</span><span class="boring">         if image_height &lt; 1 { 1 } else { image_height }
-</span><span class="boring">     };
-</span><span class="boring"> 
-</span><span class="boring">     // Camera
-</span><span class="boring"> 
-</span><span class="boring">     let focal_length = 1.0;
-</span><span class="boring">     let viewport_height = 2.0;
-</span><span class="boring">     let viewport_width = viewport_height * (IMAGE_WIDTH as f64) / (IMAGE_HEIGHT as f64);
-</span><span class="boring">     let camera_center = Point3::new(0.0, 0.0, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the vectors across the horizontal and down the vertical viewport edges.
-</span><span class="boring">     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-</span><span class="boring">     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-</span><span class="boring">     let pixel_delta_u = viewport_u / IMAGE_WIDTH as f64;
-</span><span class="boring">     let pixel_delta_v = viewport_v / IMAGE_HEIGHT as f64;
-</span><span class="boring"> 
-</span><span class="boring">     // Calculate the location of the upper left pixel.
-</span><span class="boring">     let viewport_upper_left =
-</span><span class="boring">         camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
-</span><span class="boring">     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
-</span><span class="boring"> 
-</span><span class="boring">     // Render
-</span><span class="boring"> 
-</span><span class="boring">     env_logger::init();
-</span><span class="boring">     println!("P3");
-</span><span class="boring">     println!("{IMAGE_WIDTH} {IMAGE_HEIGHT}");
-</span><span class="boring">     println!("255");
-</span><span class="boring"> 
-</span><span class="boring">     for j in 0..IMAGE_HEIGHT {
-</span><span class="boring">         log::info!("Scanlines remaining: {}", IMAGE_HEIGHT - j);
-</span><span class="boring">         for i in 0..IMAGE_WIDTH {
-</span><span class="boring">             let pixel_center =
-</span><span class="boring">                 pixel00_loc + (i as f64) * pixel_delta_u + (j as f64) * pixel_delta_v;
-</span><span class="boring">             let ray_direction = pixel_center - camera_center;
-</span><span class="boring">             let r = Ray::new(camera_center, ray_direction);
-</span><span class="boring"> 
-</span><span class="boring">             let pixel_color = ray_color(r);
-</span><span class="boring">             write_color(std::io::stdout(), pixel_color)?;
-</span><span class="boring">         }
+</span><span class="boring"> pub trait Material {
+</span><span class="boring">     fn scatter(&amp;self, _r_in: Ray, _rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">         None
 </span><span class="boring">     }
-</span><span class="boring">     log::info!("Done.");
+</span><span class="boring"> }
 </span><span class="boring"> 
-</span><span class="boring">     Ok(())
-</span><span class="boring"> }</span></code></pre>
-<p><strong>Listing 11:</strong> [<a href="https://github.com/goldnor/code/blob/2cf21871a39a309bce0edfb75464389bba9782f4/src/main.rs">main.rs</a>] <em>Rendering a red sphere</em></p>
-<br>
-<p>What we get is this:</p>
-<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.03-red-sphere.png" alt="A simple red sphere">
-<p><strong>Image 3:</strong> <em>A simple red sphere</em></p>
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Lambertian {
+</span><span class="boring">     albedo: Color,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Lambertian {
+</span><span class="boring">     pub fn new(albedo: Color) -&gt; Self {
+</span><span class="boring">         Self { albedo }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Material for Lambertian {
+</span><span class="boring">     fn scatter(&amp;self, _r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">         let mut scatter_direction = rec.normal + random_unit_vector();
+</span><span class="boring"> 
+</span><span class="boring">         // Catch degenerate scatter direction
+</span><span class="boring">         if scatter_direction.near_zero() {
+</span><span class="boring">             scatter_direction = rec.normal;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let scattered = Ray::new(rec.p, scatter_direction);
+</span><span class="boring">         let attenuation = self.albedo;
+</span><span class="boring"> 
+</span><span class="boring">         Some((scattered, attenuation))
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Metal {
+</span><span class="boring">     albedo: Color,
+</span><span class="boring">     fuzz: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Metal {
+</span><span class="boring">     pub fn new(albedo: Color, fuzz: f64) -&gt; Self {
+</span><span class="boring">         let fuzz = if fuzz &lt; 1.0 { fuzz } else { 1.0 };
+</span><span class="boring">         Self { albedo, fuzz }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Material for Metal {
+</span><span class="boring">     fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">         let mut reflected = reflect(r_in.direction(), rec.normal);
+</span><span class="boring">         reflected = unit_vector(reflected) + (self.fuzz * random_unit_vector());
+</span><span class="boring">         let scattered = Ray::new(rec.p, reflected);
+</span><span class="boring">         let attenuation = self.albedo;
+</span><span class="boring"> 
+</span><span class="boring">         (dot(scattered.direction(), rec.normal) &gt; 0.0).then(|| (scattered, attenuation))
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> #[derive(Debug, Default, Clone, Copy)]
+ pub struct Dielectric {
+     /// Refractive index in vacuum or air, or the ratio of the material's refractive index over
+     /// the refractive index of the enclosing media
+     refraction_index: f64,
+ }
+ 
+ impl Dielectric {
+     pub fn new(refraction_index: f64) -&gt; Self {
+         Self { refraction_index }
+     }
++
++    fn reflectance(cosine: f64, refraction_index: f64) -&gt; f64 {
++        let r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
++        let r0 = r0 * r0;
++        r0 + (1.0 - r0) * f64::powi(1.0 - cosine, 5)
++    }
+ }
+ 
+ impl Material for Dielectric {
+     fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+         let attenuation = Color::new(1.0, 1.0, 1.0);
+         let ri = if rec.front_face {
+             1.0 / self.refraction_index
+         } else {
+             self.refraction_index
+         };
+ 
+         let unit_direction = unit_vector(r_in.direction());
+         let cos_theta = f64::min(dot(-unit_direction, rec.normal), 1.0);
+         let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
+ 
+         let cannot_refract = ri * sin_theta &gt; 1.0;
+<span class="boring">-        let direction = if cannot_refract {
+</span>+        let direction = if cannot_refract || Dielectric::reflectance(cos_theta, ri) &gt; rand::random()
++        {
+             reflect(unit_direction, rec.normal)
+         } else {
+             refract(unit_direction, rec.normal, ri)
+         };
+ 
+         let scattered = Ray::new(rec.p, direction);
+ 
+         Some((scattered, attenuation))
+     }
+ }</code></pre>
+<p><strong>Listing 78:</strong> [<a href="https://github.com/goldnor/code/blob/bdb3324e3e3a832a0aa528a60ecffb1a2b5eb862/src/material.rs">material.rs</a>] <em>Full glass material</em></p>
 <br>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/dielectrics/total_internal_reflection.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/dielectrics/modeling_a_hollow_glass_sphere.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -282,11 +301,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/adding_a_sphere/ray_sphere_intersection.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/dielectrics/total_internal_reflection.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/surface_normals_and_multiple_objects/shading_with_surface_normals.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/dielectrics/modeling_a_hollow_glass_sphere.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

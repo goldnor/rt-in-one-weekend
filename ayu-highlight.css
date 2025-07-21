@@ -70,9 +70,11 @@ Original by Dempfi (https://github.com/dempfi/ayu)
 }
 
 .hljs-addition {
-  color: #91b362;
+  color: inherited;
+  background-color: #344037;
 }
 
 .hljs-deletion {
-  color: #d96c75;
+  color: inherited;
+  background-color: #3d272d;
 }

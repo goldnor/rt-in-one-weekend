@@ -1,0 +1,611 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Total Internal Reflection - Ray Tracing in One Weekend (Rust)</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../favicon.svg">
+        <link rel="shortcut icon" href="../../favicon.png">
+        <link rel="stylesheet" href="../../css/variables.css">
+        <link rel="stylesheet" href="../../css/general.css">
+        <link rel="stylesheet" href="../../css/chrome.css">
+        <link rel="stylesheet" href="../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Ray Tracing in One Weekend (Rust)</h1>
+
+                    <div class="right-buttons">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="total-internal-reflection"><a class="header" href="#total-internal-reflection">Total Internal Reflection</a></h2>
+<p>One troublesome practical issue with refraction is that there are ray angles for which no solution is possible using Snell's law. When a ray enters a medium of lower index of refraction at a sufficiently glancing angle, it can refract with an angle greater than 90°. If we refer back to Snell's law and the derivation of \( \sin \theta' \):</p>
+<p>\[ \sin \theta' = \frac{\eta}{\eta'} \cdot \sin \theta \]</p>
+<p>If the ray is inside glass and outside is air (\( \eta = 1.5 \) and \( \eta' = 1.0 \)):</p>
+<p>\[ \sin \theta' = \frac{1.5}{1.0} \cdot \sin \theta \]</p>
+<p>The value of \( \sin \theta' \) cannot be greater than 1. So, if,</p>
+<p>\[ \frac{1.5}{1.0} \cdot \sin \theta &gt; 1.0 \]</p>
+<p>the equality between the two sides of the equation is broken, and a solution cannot exist. If a solution does not exist, the glass cannot refract, and therefore must reflect the ray:</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{hittable::HitRecord, prelude::*};
+</span><span class="boring">
+</span><span class="boring">pub trait Material {
+</span><span class="boring">    fn scatter(&amp;self, _r_in: Ray, _rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        None
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct Lambertian {
+</span><span class="boring">    albedo: Color,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Lambertian {
+</span><span class="boring">    pub fn new(albedo: Color) -&gt; Self {
+</span><span class="boring">        Self { albedo }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Material for Lambertian {
+</span><span class="boring">    fn scatter(&amp;self, _r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        let mut scatter_direction = rec.normal + random_unit_vector();
+</span><span class="boring">
+</span><span class="boring">        // Catch degenerate scatter direction
+</span><span class="boring">        if scatter_direction.near_zero() {
+</span><span class="boring">            scatter_direction = rec.normal;
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        let scattered = Ray::new(rec.p, scatter_direction);
+</span><span class="boring">        let attenuation = self.albedo;
+</span><span class="boring">
+</span><span class="boring">        Some((scattered, attenuation))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct Metal {
+</span><span class="boring">    albedo: Color,
+</span><span class="boring">    fuzz: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Metal {
+</span><span class="boring">    pub fn new(albedo: Color, fuzz: f64) -&gt; Self {
+</span><span class="boring">        let fuzz = if fuzz &lt; 1.0 { fuzz } else { 1.0 };
+</span><span class="boring">        Self { albedo, fuzz }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Material for Metal {
+</span><span class="boring">    fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        let mut reflected = reflect(r_in.direction(), rec.normal);
+</span><span class="boring">        reflected = unit_vector(reflected) + (self.fuzz * random_unit_vector());
+</span><span class="boring">        let scattered = Ray::new(rec.p, reflected);
+</span><span class="boring">        let attenuation = self.albedo;
+</span><span class="boring">
+</span><span class="boring">        (dot(scattered.direction(), rec.normal) &gt; 0.0).then(|| (scattered, attenuation))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct Dielectric {
+</span><span class="boring">    /// Refractive index in vacuum or air, or the ratio of the material's refractive index over
+</span><span class="boring">    /// the refractive index of the enclosing media
+</span><span class="boring">    refraction_index: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Dielectric {
+</span><span class="boring">    pub fn new(refraction_index: f64) -&gt; Self {
+</span><span class="boring">        Self { refraction_index }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Material for Dielectric {
+</span><span class="boring">    fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        let attenuation = Color::new(1.0, 1.0, 1.0);
+</span><span class="boring">        let ri = if rec.front_face {
+</span><span class="boring">            1.0 / self.refraction_index
+</span><span class="boring">        } else {
+</span><span class="boring">            self.refraction_index
+</span><span class="boring">        };
+</span><span class="boring">
+</span><span class="boring">        let unit_direction = unit_vector(r_in.direction());
+</span><span class="boring">        let direction;
+</span><span class="boring">
+</span><span class="boring">        let cos_theta = f64::min(dot(-unit_direction, rec.normal), 1.0);
+</span><span class="boring">        let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
+</span><span class="boring">
+</span>        if ri * sin_theta &gt; 1.0 {
+            // Must Reflect
+<span class="boring">            direction = reflect(unit_direction, rec.normal);
+</span>        } else {
+            // Can Refract
+<span class="boring">            direction = refract(unit_direction, rec.normal, ri);
+</span>        }
+<span class="boring">
+</span><span class="boring">        let scattered = Ray::new(rec.p, direction);
+</span><span class="boring">
+</span><span class="boring">        Some((scattered, attenuation))
+</span><span class="boring">    }
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 74:</strong> [<a href="https://github.com/goldnor/code/blob/c5841df4f85f94dc87ccaadc6f50eb63ec71d868/src/material.rs">material.rs</a>] <em>Determining if the ray can refract</em></p>
+<br>
+<p>Here all the light is reflected, and because in practice that is usually inside solid objects, it is called <em>total internal reflection</em>. This is why sometimes the water-to-air boundary acts as a perfect mirror when you are submerged — if you're under water looking up, you can see things above the water, but when you are close to the surface and looking sideways, the water surface looks like a mirror.</p>
+<p>We can solve for <code>sin_theta</code> using the trigonometric identities:</p>
+<p>\[ \sin \theta = \sqrt{ 1 - \cos^2 \theta } \]</p>
+<p>and</p>
+<p>\[ \cos \theta = \mathbf{R} \cdot \mathbf{n} \]</p>
+<pre><code class="language-rust norun noplayground"><span class="boring">use crate::{hittable::HitRecord, prelude::*};
+</span><span class="boring">
+</span><span class="boring">pub trait Material {
+</span><span class="boring">    fn scatter(&amp;self, _r_in: Ray, _rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        None
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct Lambertian {
+</span><span class="boring">    albedo: Color,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Lambertian {
+</span><span class="boring">    pub fn new(albedo: Color) -&gt; Self {
+</span><span class="boring">        Self { albedo }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Material for Lambertian {
+</span><span class="boring">    fn scatter(&amp;self, _r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        let mut scatter_direction = rec.normal + random_unit_vector();
+</span><span class="boring">
+</span><span class="boring">        // Catch degenerate scatter direction
+</span><span class="boring">        if scatter_direction.near_zero() {
+</span><span class="boring">            scatter_direction = rec.normal;
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        let scattered = Ray::new(rec.p, scatter_direction);
+</span><span class="boring">        let attenuation = self.albedo;
+</span><span class="boring">
+</span><span class="boring">        Some((scattered, attenuation))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct Metal {
+</span><span class="boring">    albedo: Color,
+</span><span class="boring">    fuzz: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Metal {
+</span><span class="boring">    pub fn new(albedo: Color, fuzz: f64) -&gt; Self {
+</span><span class="boring">        let fuzz = if fuzz &lt; 1.0 { fuzz } else { 1.0 };
+</span><span class="boring">        Self { albedo, fuzz }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Material for Metal {
+</span><span class="boring">    fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        let mut reflected = reflect(r_in.direction(), rec.normal);
+</span><span class="boring">        reflected = unit_vector(reflected) + (self.fuzz * random_unit_vector());
+</span><span class="boring">        let scattered = Ray::new(rec.p, reflected);
+</span><span class="boring">        let attenuation = self.albedo;
+</span><span class="boring">
+</span><span class="boring">        (dot(scattered.direction(), rec.normal) &gt; 0.0).then(|| (scattered, attenuation))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring">pub struct Dielectric {
+</span><span class="boring">    /// Refractive index in vacuum or air, or the ratio of the material's refractive index over
+</span><span class="boring">    /// the refractive index of the enclosing media
+</span><span class="boring">    refraction_index: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Dielectric {
+</span><span class="boring">    pub fn new(refraction_index: f64) -&gt; Self {
+</span><span class="boring">        Self { refraction_index }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Material for Dielectric {
+</span><span class="boring">    fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">        let attenuation = Color::new(1.0, 1.0, 1.0);
+</span><span class="boring">        let ri = if rec.front_face {
+</span><span class="boring">            1.0 / self.refraction_index
+</span><span class="boring">        } else {
+</span><span class="boring">            self.refraction_index
+</span><span class="boring">        };
+</span><span class="boring">
+</span><span class="boring">        let unit_direction = unit_vector(r_in.direction());
+</span><span class="boring">        let direction;
+</span><span class="boring">
+</span>        let cos_theta = f64::min(dot(-unit_direction, rec.normal), 1.0);
+        let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
+
+        if ri * sin_theta &gt; 1.0 {
+            // Must Reflect
+<span class="boring">            direction = reflect(unit_direction, rec.normal);
+</span>        } else {
+            // Can Refract
+<span class="boring">            direction = refract(unit_direction, rec.normal, ri);
+</span>        }
+<span class="boring">
+</span><span class="boring">        let scattered = Ray::new(rec.p, direction);
+</span><span class="boring">
+</span><span class="boring">        Some((scattered, attenuation))
+</span><span class="boring">    }
+</span><span class="boring">}</span></code></pre>
+<p><strong>Listing 75:</strong> [<a href="https://github.com/goldnor/code/blob/c5841df4f85f94dc87ccaadc6f50eb63ec71d868/src/material.rs">material.rs</a>] <em>Determining if the ray can refract</em></p>
+<br>
+<p>And the dielectric material that always refracts (when possible) is:</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/material.rs b/src/material.rs
+</span><span class="boring">index 090a4f6..951f550 100644
+</span><span class="boring">--- a/src/material.rs
+</span><span class="boring">+++ b/src/material.rs
+</span><span class="boring">@@ -1,89 +1,97 @@
+</span><span class="boring"> use crate::{hittable::HitRecord, prelude::*};
+</span><span class="boring"> 
+</span><span class="boring"> pub trait Material {
+</span><span class="boring">     fn scatter(&amp;self, _r_in: Ray, _rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">         None
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Lambertian {
+</span><span class="boring">     albedo: Color,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Lambertian {
+</span><span class="boring">     pub fn new(albedo: Color) -&gt; Self {
+</span><span class="boring">         Self { albedo }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Material for Lambertian {
+</span><span class="boring">     fn scatter(&amp;self, _r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">         let mut scatter_direction = rec.normal + random_unit_vector();
+</span><span class="boring"> 
+</span><span class="boring">         // Catch degenerate scatter direction
+</span><span class="boring">         if scatter_direction.near_zero() {
+</span><span class="boring">             scatter_direction = rec.normal;
+</span><span class="boring">         }
+</span><span class="boring"> 
+</span><span class="boring">         let scattered = Ray::new(rec.p, scatter_direction);
+</span><span class="boring">         let attenuation = self.albedo;
+</span><span class="boring"> 
+</span><span class="boring">         Some((scattered, attenuation))
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Metal {
+</span><span class="boring">     albedo: Color,
+</span><span class="boring">     fuzz: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Metal {
+</span><span class="boring">     pub fn new(albedo: Color, fuzz: f64) -&gt; Self {
+</span><span class="boring">         let fuzz = if fuzz &lt; 1.0 { fuzz } else { 1.0 };
+</span><span class="boring">         Self { albedo, fuzz }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Material for Metal {
+</span><span class="boring">     fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+</span><span class="boring">         let mut reflected = reflect(r_in.direction(), rec.normal);
+</span><span class="boring">         reflected = unit_vector(reflected) + (self.fuzz * random_unit_vector());
+</span><span class="boring">         let scattered = Ray::new(rec.p, reflected);
+</span><span class="boring">         let attenuation = self.albedo;
+</span><span class="boring"> 
+</span><span class="boring">         (dot(scattered.direction(), rec.normal) &gt; 0.0).then(|| (scattered, attenuation))
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> #[derive(Debug, Default, Clone, Copy)]
+</span><span class="boring"> pub struct Dielectric {
+</span><span class="boring">     /// Refractive index in vacuum or air, or the ratio of the material's refractive index over
+</span><span class="boring">     /// the refractive index of the enclosing media
+</span><span class="boring">     refraction_index: f64,
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span><span class="boring"> impl Dielectric {
+</span><span class="boring">     pub fn new(refraction_index: f64) -&gt; Self {
+</span><span class="boring">         Self { refraction_index }
+</span><span class="boring">     }
+</span><span class="boring"> }
+</span><span class="boring"> 
+</span> impl Material for Dielectric {
+     fn scatter(&amp;self, r_in: Ray, rec: HitRecord) -&gt; Option&lt;(Ray, Color)&gt; {
+         let attenuation = Color::new(1.0, 1.0, 1.0);
+         let ri = if rec.front_face {
+             1.0 / self.refraction_index
+         } else {
+             self.refraction_index
+         };
+ 
+         let unit_direction = unit_vector(r_in.direction());
+<span class="boring">-        let refracted = refract(unit_direction, rec.normal, ri);
+</span>+        let cos_theta = f64::min(dot(-unit_direction, rec.normal), 1.0);
++        let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
+ 
+<span class="boring">-        let scattered = Ray::new(rec.p, refracted);
+</span>+        let cannot_refract = ri * sin_theta &gt; 1.0;
++        let direction = if cannot_refract {
++            reflect(unit_direction, rec.normal)
++        } else {
++            refract(unit_direction, rec.normal, ri)
++        };
++
++        let scattered = Ray::new(rec.p, direction);
+ 
+         Some((scattered, attenuation))
+     }
+ }</code></pre>
+<p><strong>Listing 76:</strong> [<a href="https://github.com/goldnor/code/blob/2a5e5e9ad9a9e5481fbc28a40c14c707af2cea51/src/material.rs">material.rs</a>] <em>Dielectric material class with reflection</em></p>
+<br>
+<p>Attenuation is always 1 — the glass surface absorbs nothing.</p>
+<p>If we render the prior scene with the new <code>dielectric::scatter()</code> function, we see … no change. Huh?</p>
+<p>Well, it turns out that given a sphere of material with an index of refraction greater than air, there's no incident angle that will yield total internal reflection — neither at the ray-sphere entrance point nor at the ray exit. This is due to the geometry of spheres, as a grazing incoming ray will always be bent to a smaller angle, and then bent back to the original angle on exit.</p>
+<p>So how can we illustrate total internal reflection? Well, if the sphere has an index of refraction less than the medium it's in, then we can hit it with shallow grazing angles, getting total external reflection. That should be good enough to observe the effect.</p>
+<p>We'll model a world filled with water (index of refraction approximately 1.33), and change the sphere material to air (index of refraction 1.00) — an air bubble! To do this, change the left sphere material's index of refraction to</p>
+<p>\[ \frac{\text{index of refraction of air}}{\text{index of refraction of water}} \]</p>
+<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
+</span><span class="boring">index 3894014..6e42461 100644
+</span><span class="boring">--- a/src/main.rs
+</span><span class="boring">+++ b/src/main.rs
+</span><span class="boring">@@ -1,46 +1,46 @@
+</span><span class="boring"> use code::{
+</span><span class="boring">     camera::Camera,
+</span><span class="boring">     hittable_list::HittableList,
+</span><span class="boring">     material::{Dielectric, Lambertian, Metal},
+</span><span class="boring">     prelude::*,
+</span><span class="boring">     sphere::Sphere,
+</span><span class="boring"> };
+</span><span class="boring"> 
+</span><span class="boring"> fn main() -&gt; std::io::Result&lt;()&gt; {
+</span><span class="boring">     let mut world = HittableList::new();
+</span><span class="boring"> 
+</span>     let material_ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+     let material_center = Rc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+<span class="boring">-    let material_left = Rc::new(Dielectric::new(1.5));
+</span>+    let material_left = Rc::new(Dielectric::new(1.0 / 1.33));
+     let material_right = Rc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
+<span class="boring"> 
+</span><span class="boring">     world.add(Rc::new(Sphere::new(
+</span><span class="boring">         Point3::new(0.0, -100.5, -1.0),
+</span><span class="boring">         100.0,
+</span><span class="boring">         material_ground,
+</span><span class="boring">     )));
+</span><span class="boring">     world.add(Rc::new(Sphere::new(
+</span><span class="boring">         Point3::new(0.0, 0.0, -1.2),
+</span><span class="boring">         0.5,
+</span><span class="boring">         material_center,
+</span><span class="boring">     )));
+</span><span class="boring">     world.add(Rc::new(Sphere::new(
+</span><span class="boring">         Point3::new(-1.0, 0.0, -1.0),
+</span><span class="boring">         0.5,
+</span><span class="boring">         material_left,
+</span><span class="boring">     )));
+</span><span class="boring">     world.add(Rc::new(Sphere::new(
+</span><span class="boring">         Point3::new(1.0, 0.0, -1.0),
+</span><span class="boring">         0.5,
+</span><span class="boring">         material_right,
+</span><span class="boring">     )));
+</span><span class="boring"> 
+</span><span class="boring">     env_logger::init();
+</span><span class="boring"> 
+</span><span class="boring">     Camera::default()
+</span><span class="boring">         .with_aspect_ratio(16.0 / 9.0)
+</span><span class="boring">         .with_image_width(400)
+</span><span class="boring">         .with_samples_per_pixel(100)
+</span><span class="boring">         .with_max_depth(50)
+</span><span class="boring">         .render(&amp;world)
+</span><span class="boring"> }</span></code></pre>
+<p><strong>Listing 77:</strong> [<a href="https://github.com/goldnor/code/blob/4f80203ca763361671fcf137bb1e996c54954705/src/main.rs">main.rs</a>] <em>Left sphere is an air bubble in water</em></p>
+<br>
+<p>This change yields the following render:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.17-air-bubble-total-reflection.png" alt="Air bubble sometimes refracts, sometimes reflects">
+<p><strong>Image 17:</strong> <em>Air bubble sometimes refracts, sometimes reflects</em></p>
+<br>
+<p>Here you can see that more-or-less direct rays refract, while glancing rays reflect.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../chapters/dielectrics/snells_law.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../chapters/dielectrics/schlick_approximation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../chapters/dielectrics/snells_law.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../chapters/dielectrics/schlick_approximation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../elasticlunr.min.js"></script>
+        <script src="../../mark.min.js"></script>
+        <script src="../../searcher.js"></script>
+
+        <script src="../../clipboard.min.js"></script>
+        <script src="../../highlight.js"></script>
+        <script src="../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

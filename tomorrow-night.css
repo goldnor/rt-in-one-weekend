@@ -95,10 +95,14 @@
   opacity: 0.5;
 }
 
+
 .hljs-addition {
-  color: #718c00;
+  color: inherited;
+  background-color: #2a3930;
 }
 
 .hljs-deletion {
-  color: #c82829;
+  color: inherited;
+  background-color: #402728;
 }
+

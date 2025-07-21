@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Generating Pixels with Multiple Samples - Ray Tracing in One Weekend (Rust)</title>
+        <title>Limiting the Number of Child Rays - Ray Tracing in One Weekend (Rust)</title>
 
 
         <!-- Custom HTML head -->
@@ -168,96 +168,13 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="generating-pixels-with-multiple-samples"><a class="header" href="#generating-pixels-with-multiple-samples">Generating Pixels with Multiple Samples</a></h2>
-<p>For a single pixel composed of multiple samples, we'll select samples from the area surrounding the pixel and average the resulting light (color) values together.</p>
-<p>First we'll update the <code>write_color()</code> function to account for the number of samples we use: we need to find the average across all of the samples that we take. To do this, we'll add the full color from each iteration, and then finish with a single division (by the number of samples) at the end, before writing out the color. To ensure that the color components of the final result remain within the proper \( [0,1] \) bounds, we'll add and use a small helper function: <code>interval::clamp(x)</code>. <sup class="footnote-reference" id="fr-82a-1"><a href="#footnote-82a">1</a></sup> <sup class="footnote-reference" id="fr-82b-1"><a href="#footnote-82b">2</a></sup></p>
-<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/interval.rs b/src/interval.rs
-</span><span class="boring">index 509fddf..482d922 100644
-</span><span class="boring">--- a/src/interval.rs
-</span><span class="boring">+++ b/src/interval.rs
-</span><span class="boring">@@ -1,39 +1,43 @@
-</span><span class="boring"> #[derive(Debug, Clone, Copy)]
-</span><span class="boring"> pub struct Interval {
-</span><span class="boring">     pub min: f64,
-</span><span class="boring">     pub max: f64,
-</span><span class="boring"> }
-</span><span class="boring"> 
-</span><span class="boring"> impl Default for Interval {
-</span><span class="boring">     fn default() -&gt; Self {
-</span><span class="boring">         Self::EMPTY
-</span><span class="boring">     }
-</span><span class="boring"> }
-</span><span class="boring"> 
-</span> impl Interval {
-<span class="boring">     pub const EMPTY: Self = Self {
-</span><span class="boring">         min: f64::INFINITY,
-</span><span class="boring">         max: f64::NEG_INFINITY,
-</span><span class="boring">     };
-</span><span class="boring"> 
-</span><span class="boring">     pub const UNIVERSE: Self = Self {
-</span><span class="boring">         min: f64::NEG_INFINITY,
-</span><span class="boring">         max: f64::INFINITY,
-</span><span class="boring">     };
-</span><span class="boring"> 
-</span><span class="boring">-    pub fn new(min: f64, max: f64) -&gt; Self {
-</span><span class="boring">+    pub const fn new(min: f64, max: f64) -&gt; Self {
-</span><span class="boring">         Self { min, max }
-</span><span class="boring">     }
-</span><span class="boring"> 
-</span><span class="boring">     pub fn size(&amp;self) -&gt; f64 {
-</span><span class="boring">         self.max - self.min
-</span><span class="boring">     }
-</span><span class="boring"> 
-</span><span class="boring">     pub fn contains(&amp;self, x: f64) -&gt; bool {
-</span><span class="boring">         self.min &lt;= x &amp;&amp; x &lt;= self.max
-</span><span class="boring">     }
-</span> 
-     pub fn surrounds(&amp;self, x: f64) -&gt; bool {
-         self.min &lt; x &amp;&amp; x &lt; self.max
-     }
-+
-+    pub const fn clamp(&amp;self, x: f64) -&gt; f64 {
-+        x.clamp(self.min, self.max)
-+    }
- }</code></pre>
-<p><strong>Listing 43:</strong> [<a href="https://github.com/goldnor/code/blob/c2937087b619981d108b6774b790af1d59316329/src/interval.rs">interval.rs</a>] <em>The interval::clamp() utility function</em></p>
-<br>
-<p>Here's the updated <code>write_color()</code> function that incorporates the interval clamping function:</p>
-<pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/color.rs b/src/color.rs
-</span><span class="boring">index c645ca2..1615d55 100644
-</span><span class="boring">--- a/src/color.rs
-</span><span class="boring">+++ b/src/color.rs
-</span><span class="boring">@@ -1,15 +1,18 @@
-</span><span class="boring">-use crate::vec3::Vec3;
-</span>+use crate::prelude::*;
- 
- pub type Color = Vec3;
- 
- pub fn write_color(mut out: impl std::io::Write, pixel_color: Color) -&gt; std::io::Result&lt;()&gt; {
-     let r = pixel_color.x();
-     let g = pixel_color.y();
-     let b = pixel_color.z();
- 
-<span class="boring">-    let rbyte = (255.999 * r) as i32;
-</span><span class="boring">-    let gbyte = (255.999 * g) as i32;
-</span><span class="boring">-    let bbyte = (255.999 * b) as i32;
-</span>+    // Translate the [0,1] component values to the byte range [0,255].
-+    const INTENSITY: Interval = Interval::new(0.000, 0.999);
-+    let rbyte = (256.0 * INTENSITY.clamp(r)) as i32;
-+    let gbyte = (256.0 * INTENSITY.clamp(g)) as i32;
-+    let bbyte = (256.0 * INTENSITY.clamp(b)) as i32;
- 
-+    // Write out the pixel color components.
-     writeln!(out, "{rbyte} {gbyte} {bbyte}")
- }</code></pre>
-<p><strong>Listing 44:</strong> [<a href="https://github.com/goldnor/code/blob/f9b02376bc5c4d4f7337d6fef6903506086925da/src/color.rs">color.rs</a>] <em>The multi-sample write_color() function</em></p>
-<br>
-<p>Now let's update the camera class to define and use a new <code>camera::get_ray(i,j)</code> function, which will generate different samples for each pixel. This function will use a new helper function <code>sample_square()</code> that generates a random sample point within the unit square centered at the origin. We then transform the random sample from this ideal square back to the particular pixel we're currently sampling.</p>
+                        <h2 id="limiting-the-number-of-child-rays"><a class="header" href="#limiting-the-number-of-child-rays">Limiting the Number of Child Rays</a></h2>
+<p>There's one potential problem lurking here. Notice that the <code>ray_color</code> function is recursive. When will it stop recursing? When it fails to hit anything. In some cases, however, that may be a long time — long enough to blow the stack. To guard against that, let's limit the maximum recursion depth, returning no light contribution at the maximum depth:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/camera.rs b/src/camera.rs
-</span><span class="boring">index 73dc5cc..f181b03 100644
+</span><span class="boring">index 181eb64..2abb78e 100644
 </span><span class="boring">--- a/src/camera.rs
 </span><span class="boring">+++ b/src/camera.rs
-</span><span class="boring">@@ -1,110 +1,151 @@
+</span><span class="boring">@@ -1,152 +1,166 @@
 </span><span class="boring"> use crate::{hittable::Hittable, prelude::*};
 </span><span class="boring"> 
 </span> pub struct Camera {
@@ -265,13 +182,15 @@
      pub aspect_ratio: f64,
      /// Rendered image width in pixel count
      pub image_width: i32,
-+    // Count of random samples for each pixel
-+    pub samples_per_pixel: i32,
+     // Count of random samples for each pixel
+     pub samples_per_pixel: i32,
++    // Maximum number of ray bounces into scene
++    pub max_depth: i32,
  
      /// Rendered image height
      image_height: i32,
-+    // Color scale factor for a sum of pixel samples
-+    pixel_samples_scale: f64,
+     // Color scale factor for a sum of pixel samples
+     pixel_samples_scale: f64,
      /// Camera center
      center: Point3,
      /// Location of pixel 0, 0
@@ -287,9 +206,10 @@
          Self {
              aspect_ratio: 1.0,
              image_width: 100,
-+            samples_per_pixel: 10,
+             samples_per_pixel: 10,
++            max_depth: 10,
              image_height: Default::default(),
-+            pixel_samples_scale: Default::default(),
+             pixel_samples_scale: Default::default(),
              center: Default::default(),
              pixel00_loc: Default::default(),
              pixel_delta_u: Default::default(),
@@ -310,9 +230,15 @@
 </span><span class="boring"> 
 </span><span class="boring">         self
 </span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     pub fn with_samples_per_pixel(mut self, samples_per_pixel: i32) -&gt; Self {
+</span><span class="boring">         self.samples_per_pixel = samples_per_pixel;
+</span><span class="boring"> 
+</span><span class="boring">         self
+</span><span class="boring">     }
 </span> 
-+    pub fn with_samples_per_pixel(mut self, samples_per_pixel: i32) -&gt; Self {
-+        self.samples_per_pixel = samples_per_pixel;
++    pub fn with_max_depth(mut self, max_depth: i32) -&gt; Self {
++        self.max_depth = max_depth;
 +
 +        self
 +    }
@@ -327,38 +253,31 @@
          for j in 0..self.image_height {
              info!("Scanlines remaining: {}", self.image_height - j);
              for i in 0..self.image_width {
-<span class="boring">-                let pixel_center = self.pixel00_loc
-</span><span class="boring">-                    + (i as f64) * self.pixel_delta_u
-</span><span class="boring">-                    + (j as f64) * self.pixel_delta_v;
-</span><span class="boring">-                let ray_direction = pixel_center - self.center;
-</span><span class="boring">-                let r = Ray::new(self.center, ray_direction);
-</span><span class="boring">-
-</span><span class="boring">-                let pixel_color = Self::ray_color(r, world);
-</span><span class="boring">-                write_color(std::io::stdout(), pixel_color)?;
-</span>+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
-+                for _sample in 0..self.samples_per_pixel {
-+                    let r = self.get_ray(i, j);
-+                    pixel_color += Self::ray_color(r, world);
-+                }
-+                write_color(std::io::stdout(), self.pixel_samples_scale * pixel_color)?;
+                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                 for _sample in 0..self.samples_per_pixel {
+                     let r = self.get_ray(i, j);
+<span class="boring">-                    pixel_color += Self::ray_color(r, world);
+</span>+                    pixel_color += Self::ray_color(r, self.max_depth, world);
+                 }
+                 write_color(std::io::stdout(), self.pixel_samples_scale * pixel_color)?;
              }
          }
          info!("Done.");
  
          Ok(())
      }
- 
-     fn initialize(&amp;mut self) {
-         self.image_height = {
-             let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
-             if image_height &lt; 1 { 1 } else { image_height }
-         };
- 
-+        self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
-+
-         self.center = Point3::new(0.0, 0.0, 0.0);
- 
-<span class="boring">         // Determine viewport dimensions.
+<span class="boring"> 
+</span><span class="boring">     fn initialize(&amp;mut self) {
+</span><span class="boring">         self.image_height = {
+</span><span class="boring">             let image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+</span><span class="boring">             if image_height &lt; 1 { 1 } else { image_height }
+</span><span class="boring">         };
+</span><span class="boring"> 
+</span><span class="boring">         self.pixel_samples_scale = 1.0 / self.samples_per_pixel as f64;
+</span><span class="boring"> 
+</span><span class="boring">         self.center = Point3::new(0.0, 0.0, 0.0);
+</span><span class="boring"> 
+</span><span class="boring">         // Determine viewport dimensions.
 </span><span class="boring">         let focal_length = 1.0;
 </span><span class="boring">         let viewport_height = 2.0;
 </span><span class="boring">         let viewport_width =
@@ -376,56 +295,63 @@
 </span><span class="boring">         let viewport_upper_left =
 </span><span class="boring">             self.center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
 </span><span class="boring">         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
-</span>     }
- 
-+    fn get_ray(&amp;self, i: i32, j: i32) -&gt; Ray {
-+        // Construct a camera ray originating from the origin and directed at randomly sampled
-+        // point around the pixel location i, j.
-+
-+        let offset = Self::sample_square();
-+        let pixel_sample = self.pixel00_loc
-+            + ((i as f64 + offset.x()) * self.pixel_delta_u)
-+            + ((j as f64 + offset.y()) * self.pixel_delta_v);
-+
-+        let ray_origin = self.center;
-+        let ray_direction = pixel_sample - ray_origin;
-+
-+        Ray::new(ray_origin, ray_direction)
-+    }
-+
-+    fn sample_square() -&gt; Vec3 {
-+        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
-+        Vec3::new(
-+            rand::random::&lt;f64&gt;() - 0.5,
-+            rand::random::&lt;f64&gt;() - 0.5,
-+            0.0,
-+        )
-+    }
-+
-<span class="boring">+    fn _sample_disk(radius: f64) -&gt; Vec3 {
-</span><span class="boring">+        // Returns a random point in the unit (radius 0.5) disk centered at the origin.
-</span><span class="boring">+        radius * random_in_unit_disk()
-</span><span class="boring">+    }
-</span><span class="boring">+
-</span>     fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
-<span class="boring">         if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
-</span><span class="boring">             return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
-</span><span class="boring">         }
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn get_ray(&amp;self, i: i32, j: i32) -&gt; Ray {
+</span><span class="boring">         // Construct a camera ray originating from the origin and directed at randomly sampled
+</span><span class="boring">         // point around the pixel location i, j.
+</span><span class="boring"> 
+</span><span class="boring">         let offset = Self::sample_square();
+</span><span class="boring">         let pixel_sample = self.pixel00_loc
+</span><span class="boring">             + ((i as f64 + offset.x()) * self.pixel_delta_u)
+</span><span class="boring">             + ((j as f64 + offset.y()) * self.pixel_delta_v);
+</span><span class="boring"> 
+</span><span class="boring">         let ray_origin = self.center;
+</span><span class="boring">         let ray_direction = pixel_sample - ray_origin;
+</span><span class="boring"> 
+</span><span class="boring">         Ray::new(ray_origin, ray_direction)
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn sample_square() -&gt; Vec3 {
+</span><span class="boring">         // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+</span><span class="boring">         Vec3::new(
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             rand::random::&lt;f64&gt;() - 0.5,
+</span><span class="boring">             0.0,
+</span><span class="boring">         )
+</span><span class="boring">     }
+</span><span class="boring"> 
+</span><span class="boring">     fn _sample_disk(radius: f64) -&gt; Vec3 {
+</span><span class="boring">         // Returns a random point in the unit (radius 0.5) disk centered at the origin.
+</span><span class="boring">         radius * random_in_unit_disk()
+</span><span class="boring">     }
 </span> 
-<span class="boring">         let unit_direction = unit_vector(r.direction());
-</span><span class="boring">         let a = 0.5 * (unit_direction.y() + 1.0);
-</span><span class="boring">         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
-</span>     }
+<span class="boring">-    fn ray_color(r: Ray, world: &amp;impl Hittable) -&gt; Color {
+</span>+    fn ray_color(r: Ray, depth: i32, world: &amp;impl Hittable) -&gt; Color {
++        // If we've exceeded the ray bounce limit, no more light is gathered.
++        if depth &lt;= 0 {
++            return Color::new(0.0, 0.0, 0.0);
++        }
++
+         if let Some(rec) = world.hit(r, Interval::new(0.0, INFINITY)) {
+             let direction = random_on_hemisphere(rec.normal);
+<span class="boring">-            return 0.5 * Self::ray_color(Ray::new(rec.p, direction), world);
+</span>+            return 0.5 * Self::ray_color(Ray::new(rec.p, direction), depth - 1, world);
+         }
+ 
+         let unit_direction = unit_vector(r.direction());
+         let a = 0.5 * (unit_direction.y() + 1.0);
+         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+     }
  }</code></pre>
-<p><strong>Listing 45:</strong> [<a href="https://github.com/goldnor/code/blob/8f64151623f1e58e249d00f11a8cac23523fec1b/src/camera.rs">camera.rs</a>] <em>Camera with samples-per-pixel parameter</em></p>
+<p><strong>Listing 52:</strong> [<a href="https://github.com/goldnor/code/blob/36edc44f5198d8ed04f5b50641cccd792f435f26/src/camera.rs">camera.rs</a>] <em>camera::ray_color() with depth limiting</em></p>
 <br>
-<p>(In addition to the new <code>sample_square()</code> function above, you'll also find the function <code>sample_disk()</code> in the Github source code. This is included in case you'd like to experiment with non-square pixels, but we won't be using it in this book. sample_disk() depends on the function random_in_unit_disk() which is defined later on.)</p>
-<p>Main is updated to set the new camera parameter.</p>
+<p>Update the main() function to use this new depth limit:</p>
 <pre><code class="language-rust-diff norun noplayground"><span class="boring">diff --git a/src/main.rs b/src/main.rs
-</span><span class="boring">index 27377f1..9f08807 100644
+</span><span class="boring">index 9f08807..a016213 100644
 </span><span class="boring">--- a/src/main.rs
 </span><span class="boring">+++ b/src/main.rs
-</span><span class="boring">@@ -1,15 +1,16 @@
+</span><span class="boring">@@ -1,16 +1,17 @@
 </span><span class="boring"> use code::{camera::Camera, hittable_list::HittableList, prelude::*, sphere::Sphere};
 </span><span class="boring"> 
 </span> fn main() -&gt; std::io::Result&lt;()&gt; {
@@ -439,33 +365,26 @@
      Camera::default()
          .with_aspect_ratio(16.0 / 9.0)
          .with_image_width(400)
-+        .with_samples_per_pixel(100)
+         .with_samples_per_pixel(100)
++        .with_max_depth(50)
          .render(&amp;world)
  }</code></pre>
-<p><strong>Listing 46:</strong> [<a href="https://github.com/goldnor/code/blob/d4b3a2498a7ed1a3a51ade2c425683a7ff4ad018/src/main.rs">main.rs</a>] <em>Setting the new samples-per-pixel parameter</em></p>
+<p><strong>Listing 53:</strong> [<a href="https://github.com/goldnor/code/blob/7be08e72109304cab1df8c2d9d6a9a17fe9a936b/src/main.rs">main.rs</a>] <em>Using the new ray depth limiting</em></p>
 <br>
-<p>Zooming into the image that is produced, we can see the difference in edge pixels.</p>
-<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.06-antialias-before-after.png" alt="Before and after antialiasing">
-<!-- ![x](../../imgs/img-1.06-antialias-before-after.png) -->
-<p><strong>Image 6:</strong> <em>Before and after antialiasing</em></p>
+<p>For this very simple scene we should get basically the same result:</p>
+<img style="width: 100%; image-rendering: pixelated" src="../../imgs/img-1.08-second-diffuse.png" alt="Second render of a diffuse sphere with limited bounces">
+<p><strong>Image 8:</strong> <em>Second render of a diffuse sphere with limited bounces</em></p>
 <br>
-<hr>
-<ol class="footnote-definition"><li id="footnote-82a">
-<p>For this purpose, version 1.50 of Rust introduced the <code>f64::clamp(self, min, max)</code> <a href="https://doc.rust-lang.org/std/primitive.f64.html#method.clamp">function</a> (the C++17 standard introduced a similar <a href="https://en.cppreference.com/w/cpp/algorithm/clamp.html">function</a> called <code>std::clamp(v, lo, hi)</code>). <a href="#fr-82a-1">↩</a></p>
-</li>
-<li id="footnote-82b">
-<p>The function is const, meaning it can be used to initialise const variables. This will be demonstrated in the next listing. <a href="#fr-82b-1">↩</a></p>
-</li>
-</ol>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../chapters/antialiasing/some_random_number_utilities.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../chapters/diffuse_materials/a_simple_diffuse_material.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../chapters/diffuse_materials/diffuse_materials.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../chapters/diffuse_materials/fixing_shadow_acne.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -475,11 +394,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../chapters/antialiasing/some_random_number_utilities.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../chapters/diffuse_materials/a_simple_diffuse_material.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../chapters/diffuse_materials/diffuse_materials.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../chapters/diffuse_materials/fixing_shadow_acne.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
